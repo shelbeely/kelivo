@@ -38,6 +38,7 @@ import '../../assistant/widgets/mcp_assistant_sheet.dart';
 import '../../chat/widgets/reasoning_budget_sheet.dart';
 import '../../search/widgets/search_settings_sheet.dart';
 import '../widgets/mini_map_sheet.dart';
+import '../../chat/pages/webview_page.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
