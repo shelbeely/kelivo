@@ -3275,7 +3275,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                               onMore: () async {
                                 final action = await showMessageMoreSheet(context, message);
                                 if (!mounted) return;
-                                if (action == MessageMoreAction.delete) {
+                                if (action == MessageMoreAction.webview) {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => WebviewPage(htmlContent: message.content),
+                                    ),
+                                  );
+                                } else if (action == MessageMoreAction.delete) {
                                   final l10n = AppLocalizations.of(context)!;
                                   final confirm = await showDialog<bool>(
                                     context: context,
@@ -4089,7 +4095,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                                     onMore: () async {
                                                       final action = await showMessageMoreSheet(context, message);
                                                       if (!mounted) return;
-                                                      if (action == MessageMoreAction.delete) {
+                                                      if (action == MessageMoreAction.webview) {
+                                                        Navigator.of(context).push(
+                                                          MaterialPageRoute(
+                                                            builder: (_) => WebviewPage(htmlContent: message.content),
+                                                          ),
+                                                        );
+                                                      } else if (action == MessageMoreAction.delete) {
                                                         final l10n = AppLocalizations.of(context)!;
                                                         final confirm = await showDialog<bool>(
                                                           context: context,

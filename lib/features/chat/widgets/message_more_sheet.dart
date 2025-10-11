@@ -6,10 +6,11 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/providers/model_provider.dart';
 import '../pages/select_copy_page.dart';
+import '../pages/webview_page.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../../l10n/app_localizations.dart';
 
-enum MessageMoreAction { edit, fork, delete, share }
+enum MessageMoreAction { edit, fork, delete, share, webview }
 
 Future<MessageMoreAction?> showMessageMoreSheet(BuildContext context, ChatMessage message) async {
   final cs = Theme.of(context).colorScheme;
@@ -182,13 +183,7 @@ class _MessageMoreSheetState extends State<_MessageMoreSheet> {
                       icon: Lucide.BookOpenText,
                       label: l10n.messageMoreSheetRenderWebView,
                       onTap: () {
-                        Navigator.of(context).pop();
-                        showAppSnackBar(
-                          context,
-                          message: l10n.messageMoreSheetNotImplemented,
-                          type: NotificationType.warning,
-                          duration: const Duration(seconds: 3),
-                        );
+                        Navigator.of(context).pop(MessageMoreAction.webview);
                       },
                     ),
                     _actionItem(
