@@ -6,6 +6,7 @@ import 'package:html/parser.dart' as html_parser;
 import 'package:html/dom.dart' as dom;
 import 'package:html2md/html2md.dart' as html2md;
 import 'package:mcp_client/mcp_client.dart' as mcp;
+import '../local_server/inmemory_transport.dart';
 
 /// @kelivo/fetch — In-memory MCP server engine and transport (Flutter/Dart)
 ///
@@ -133,9 +134,10 @@ class KelivoFetcher {
 }
 
 /// Minimal JSON-RPC server for MCP that serves @kelivo/fetch tools.
-class KelivoFetchMcpServerEngine {
+class KelivoFetchMcpServerEngine implements LocalMcpServer {
   bool _closed = false;
 
+  @override
   Future<dynamic> handleMessage(dynamic message) async {
     if (_closed) return null;
 
@@ -274,45 +276,5 @@ class KelivoFetchMcpServerEngine {
         'inputSchema': schema(),
       },
     ];
-  }
-}
-
-/// In-memory ClientTransport that directly invokes the local server engine.
-class KelivoInMemoryClientTransport implements mcp.ClientTransport {
-  final KelivoFetchMcpServerEngine _server;
-  final _messageController = StreamController<dynamic>.broadcast();
-  final _closeCompleter = Completer<void>();
-  bool _closed = false;
-
-  KelivoInMemoryClientTransport(this._server);
-
-  @override
-  Stream<dynamic> get onMessage => _messageController.stream;
-
-  @override
-  Future<void> get onClose => _closeCompleter.future;
-
-  @override
-  void send(dynamic message) {
-    if (_closed) return;
-    // Process asynchronously to mimic real transport
-    Future.microtask(() async {
-      final resp = await _server.handleMessage(message);
-      if (_closed) return;
-      if (resp != null) {
-        _messageController.add(resp);
-      }
-    });
-  }
-
-  @override
-  void close() {
-    if (_closed) return;
-    _closed = true;
-    try {
-      _server.close();
-    } catch (_) {}
-    if (!_messageController.isClosed) _messageController.close();
-    if (!_closeCompleter.isCompleted) _closeCompleter.complete();
   }
 }
