@@ -12,6 +12,8 @@ class LocalMcpServerEngine implements LocalMcpServer {
     'location': LocationTool(),
     'contacts': ContactsTool(),
     'calendar': CalendarTool(),
+    'alarm': AlarmTool(),
+    'device_info': DeviceInfoTool(),
   };
   bool _closed = false;
 

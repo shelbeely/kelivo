@@ -5,9 +5,16 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:device_calendar/device_calendar.dart';
 import 'package:flutter_sms/flutter_sms.dart';
+import 'package:flutter_alarm_clock/flutter_alarm_clock.dart';
 import 'package:geolocator/geolocator.dart';
+import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sensors_plus/sensors_plus.dart';
+import 'package:flutter_sensors/flutter_sensors.dart' as fs;
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz;
+
 
 // A generic interface for our local tools
 abstract class Tool {
@@ -81,6 +88,103 @@ class DeviceStatusTool implements Tool {
   }
 }
 
+class DeviceInfoTool implements Tool {
+  @override
+  String get name => 'device_info';
+
+  @override
+  String get description => 'Get the device\'s build information.';
+
+  @override
+  Map<String, dynamic> get inputSchema => {
+        'type': 'object',
+        'properties': {},
+        'required': [],
+      };
+
+  @override
+  Future<Map<String, dynamic>> call(Map<String, dynamic> arguments) async {
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      final info = await deviceInfo.deviceInfo;
+      return {
+        'content': [
+          {'type': 'text', 'text': jsonEncode(info.data)}
+        ],
+        'isStreaming': false,
+        'isError': false,
+      };
+    } catch (e) {
+      return {
+        'content': [
+          {'type': 'text', 'text': e.toString()}
+        ],
+        'isStreaming': false,
+        'isError': true,
+      };
+    }
+  }
+}
+
+class AlarmTool implements Tool {
+  @override
+  String get name => 'alarm';
+
+  @override
+  String get description => 'Create an alarm.';
+
+  @override
+  Map<String, dynamic> get inputSchema => {
+        'type': 'object',
+        'properties': {
+          'hour': {
+            'type': 'integer',
+            'description': 'The hour of the alarm.',
+          },
+          'minute': {
+            'type': 'integer',
+            'description': 'The minute of the alarm.',
+          },
+          'title': {
+            'type': 'string',
+            'description': 'The title of the alarm.',
+          },
+        },
+        'required': ['hour', 'minute'],
+      };
+
+  @override
+  Future<Map<String, dynamic>> call(Map<String, dynamic> arguments) async {
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      throw Exception('This tool is not supported on desktop');
+    }
+    try {
+      final hour = arguments['hour'] as int;
+      final minute = arguments['minute'] as int;
+      final title = arguments['title'] as String?;
+
+      // The createAlarm method expects positional arguments for hour and minute.
+      FlutterAlarmClock.createAlarm(hour, minute, title: title ?? '');
+
+      return {
+        'content': [
+          {'type': 'text', 'text': 'Alarm created successfully.'}
+        ],
+        'isStreaming': false,
+        'isError': false,
+      };
+    } catch (e) {
+      return {
+        'content': [
+          {'type': 'text', 'text': e.toString()}
+        ],
+        'isStreaming': false,
+        'isError': true,
+      };
+    }
+  }
+}
+
 class CalendarTool implements Tool {
   Future<bool> _requestPermission() async {
     var status = await Permission.calendar.status;
@@ -103,7 +207,7 @@ class CalendarTool implements Tool {
           'action': {
             'type': 'string',
             'description': 'The action to perform.',
-            'enum': ['list', 'create', 'read', 'update', 'delete'],
+            'enum': ['list_calendars', 'list', 'create', 'read', 'update', 'delete'],
             'default': 'list',
           },
           'calendarId': {
@@ -119,11 +223,15 @@ class CalendarTool implements Tool {
             'description': 'The event data to create or update.',
           },
         },
-        'required': ['action', 'calendarId'],
+        'required': ['action'],
       };
 
   @override
   Future<Map<String, dynamic>> call(Map<String, dynamic> arguments) async {
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      throw Exception('This tool is not supported on desktop');
+    }
+    tz.initializeTimeZones();
     try {
       if (!await _requestPermission()) {
         throw Exception('Calendar permission denied');
@@ -141,10 +249,21 @@ class CalendarTool implements Tool {
         throw Exception('No calendars found on this device.');
       }
 
-      final calendar = calendars.firstWhere((c) => c.id == calendarId);
+      final calendar = calendarId != null ? calendars.firstWhere((c) => c.id == calendarId) : null;
 
       switch (action) {
+        case 'list_calendars':
+          return {
+            'content': [
+              {'type': 'text', 'text': jsonEncode(calendars)}
+            ],
+            'isStreaming': false,
+            'isError': false,
+          };
         case 'list':
+          if (calendar == null) {
+            throw Exception('Calendar not found');
+          }
           final eventsResult = await deviceCalendarPlugin.retrieveEvents(
               calendar.id,
               RetrieveEventsParams(
@@ -159,7 +278,15 @@ class CalendarTool implements Tool {
             'isError': false,
           };
         case 'create':
-          final event = Event.fromJson(eventData!);
+          if (calendar == null) {
+            throw Exception('Calendar not found');
+          }
+          final event = Event(
+            calendar.id,
+            title: eventData!['title'],
+            start: tz.TZDateTime.fromMillisecondsSinceEpoch(tz.local, eventData['start']),
+            end: tz.TZDateTime.fromMillisecondsSinceEpoch(tz.local, eventData['end']),
+          );
           final createEventResult =
               await deviceCalendarPlugin.createOrUpdateEvent(event);
           return {
@@ -170,6 +297,9 @@ class CalendarTool implements Tool {
             'isError': false,
           };
         case 'read':
+          if (calendar == null) {
+            throw Exception('Calendar not found');
+          }
           final eventResult = await deviceCalendarPlugin.retrieveEvents(
               calendar.id,
               RetrieveEventsParams(
@@ -184,7 +314,16 @@ class CalendarTool implements Tool {
             'isError': false,
           };
         case 'update':
-          final event = Event.fromJson(eventData!);
+          if (calendar == null) {
+            throw Exception('Calendar not found');
+          }
+          final event = Event(
+            calendar.id,
+            eventId: eventId,
+            title: eventData!['title'],
+            start: tz.TZDateTime.fromMillisecondsSinceEpoch(tz.local, eventData['start']),
+            end: tz.TZDateTime.fromMillisecondsSinceEpoch(tz.local, eventData['end']),
+          );
           final updateEventResult =
               await deviceCalendarPlugin.createOrUpdateEvent(event);
           return {
@@ -195,6 +334,9 @@ class CalendarTool implements Tool {
             'isError': false,
           };
         case 'delete':
+          if (calendar == null) {
+            throw Exception('Calendar not found');
+          }
           final deleteEventResult = await deviceCalendarPlugin.deleteEvent(
               calendar.id, eventId!);
           return {
@@ -243,6 +385,9 @@ class ContactsTool implements Tool {
 
   @override
   Future<Map<String, dynamic>> call(Map<String, dynamic> arguments) async {
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      throw Exception('This tool is not supported on desktop');
+    }
     try {
       if (!await _requestPermission()) {
         throw Exception('Contacts permission denied');
@@ -270,7 +415,6 @@ class ContactsTool implements Tool {
                           'country': a.country,
                         })
                     .toList(),
-                'avatar': c.avatar,
               })
           .toList();
 
@@ -324,6 +468,9 @@ class LocationTool implements Tool {
 
   @override
   Future<Map<String, dynamic>> call(Map<String, dynamic> arguments) async {
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      throw Exception('This tool is not supported on desktop');
+    }
     try {
       if (!await _requestPermission()) {
         throw Exception('Location permission denied');
@@ -399,6 +546,9 @@ class SmsTool implements Tool {
 
   @override
   Future<Map<String, dynamic>> call(Map<String, dynamic> arguments) async {
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      throw Exception('This tool is not supported on desktop');
+    }
     try {
       if (!await _requestPermission()) {
         throw Exception('SMS permission denied');
@@ -408,10 +558,16 @@ class SmsTool implements Tool {
       final confirm = arguments['confirm'] as bool? ?? true;
 
       if (confirm) {
-        // Here you would typically show a dialog to the user
-        // to confirm sending the message. For simplicity, we'll
-        // just log it to the console.
-        print('Confirmation required to send SMS to $recipient: "$message"');
+        return {
+          'content': [
+            {
+              'type': 'text',
+              'text': 'Please confirm sending the following SMS:\nTo: $recipient\nMessage: $message'
+            }
+          ],
+          'isStreaming': false,
+          'isError': false,
+        };
       }
 
       await sendSMS(message: message, recipients: [recipient]);
@@ -451,10 +607,25 @@ class SensorsTool implements Tool {
 
   @override
   Future<Map<String, dynamic>> call(Map<String, dynamic> arguments) async {
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      throw Exception('This tool is not supported on desktop');
+    }
     try {
       final accelerometer = await accelerometerEvents.first;
       final gyroscope = await gyroscopeEvents.first;
       final magnetometer = await magnetometerEvents.first;
+
+      final proximityStream = await fs.SensorManager().sensorUpdates(
+        sensorId: 1,
+        interval: Duration(milliseconds: 100),
+      );
+      final proximity = await proximityStream.first;
+
+      final lightStream = await fs.SensorManager().sensorUpdates(
+        sensorId: 2,
+        interval: Duration(milliseconds: 100),
+      );
+      final light = await lightStream.first;
 
       return {
         'content': [
@@ -476,6 +647,8 @@ class SensorsTool implements Tool {
                 'y': magnetometer.y,
                 'z': magnetometer.z,
               },
+              'proximity': proximity.data[0],
+              'light': light.data[0],
             }),
           }
         ],
