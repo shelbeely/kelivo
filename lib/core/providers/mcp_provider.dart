@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:mcp_client/mcp_client.dart' as mcp;
 import '../services/mcp/kelivo_fetch/kelivo_fetch_server.dart';
+import '../services/mcp/local_server/inmemory_transport.dart';
+import '../services/mcp/local_server/local_server.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -239,8 +241,8 @@ class McpProvider extends ChangeNotifier {
         _servers = list;
       } catch (_) {}
     }
-    // Ensure built-in @kelivo/fetch is present by default
-    _ensureBuiltinFetchServerPresent();
+    // Ensure built-in servers are present by default
+    _ensureBuiltinServersPresent();
     // initialize statuses
     for (final s in _servers) {
       _status[s.id] = McpStatus.idle;
@@ -255,17 +257,28 @@ class McpProvider extends ChangeNotifier {
     }
   }
 
-  void _ensureBuiltinFetchServerPresent() {
-    final exists = _servers.any((s) => s.transport == McpTransportType.inmemory || s.name == '@kelivo/fetch' || s.id == 'kelivo_fetch');
-    if (exists) return;
-    final cfg = McpServerConfig(
-      id: 'kelivo_fetch',
-      enabled: true,
-      name: '@kelivo/fetch',
-      transport: McpTransportType.inmemory,
-      tools: const <McpToolConfig>[], // will refresh on connect
-    );
-    _servers = [..._servers, cfg];
+  void _ensureBuiltinServersPresent() {
+    final fetchExists = _servers.any((s) => s.id == 'kelivo_fetch');
+    if (!fetchExists) {
+      _servers.add(McpServerConfig(
+        id: 'kelivo_fetch',
+        enabled: true,
+        name: '@kelivo/fetch',
+        transport: McpTransportType.inmemory,
+        tools: const <McpToolConfig>[],
+      ));
+    }
+
+    final localExists = _servers.any((s) => s.id == 'local_phone');
+    if (!localExists) {
+      _servers.add(McpServerConfig(
+        id: 'local_phone',
+        enabled: true,
+        name: '@local/phone',
+        transport: McpTransportType.inmemory,
+        tools: const <McpToolConfig>[],
+      ));
+    }
   }
 
   Future<void> _persist() async {
@@ -621,8 +634,10 @@ class McpProvider extends ChangeNotifier {
 
       // In-memory builtin server path
       if (server.transport == McpTransportType.inmemory) {
-        final engine = KelivoFetchMcpServerEngine();
-        final transport = KelivoInMemoryClientTransport(engine);
+        final LocalMcpServer engine = (server.id == 'local_phone')
+            ? LocalMcpServerEngine()
+            : KelivoFetchMcpServerEngine();
+        final transport = LocalInMemoryClientTransport(engine);
         final client = mcp.McpClient.createClient(clientConfig);
         await client.connect(transport);
         _clients[id] = client;

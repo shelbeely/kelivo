@@ -4,9 +4,12 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   audioplayers_windows
+  battery_plus
+  connectivity_plus
   desktop_drop
   dynamic_color
   file_selector_windows
+  geolocator_windows
   irondash_engine_context
   permission_handler_windows
   screen_retriever_windows
