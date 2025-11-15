@@ -13,8 +13,6 @@ subprojects {
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
 subprojects {
-    project.evaluationDependsOn(":app")
-    
     // Fix for dependencies missing namespace (AGP 8.0+)
     afterEvaluate {
         if (project.plugins.hasPlugin("com.android.library")) {
