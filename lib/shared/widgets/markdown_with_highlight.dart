@@ -2406,8 +2406,13 @@ class HexColorMd extends InlineMd {
     final m = exp.firstMatch(text);
     if (m == null) return TextSpan(text: text, style: config.style);
     
-    final hexCode = m.group(0) ?? ''; // Full match including #
-    final hexValue = m.group(1) ?? ''; // Just the hex digits
+    final hexCode = m.group(0); // Full match including #
+    final hexValue = m.group(1); // Just the hex digits
+    
+    // Validate that we have the expected groups (should always be true with our regex)
+    if (hexCode == null || hexValue == null || hexValue.isEmpty) {
+      return TextSpan(text: text, style: config.style);
+    }
     
     // Convert 3-digit hex to 6-digit hex
     String fullHex;
@@ -2455,7 +2460,8 @@ class HexColorMd extends InlineMd {
     );
     
     return WidgetSpan(
-      alignment: PlaceholderAlignment.middle,
+      alignment: PlaceholderAlignment.baseline,
+      baseline: TextBaseline.alphabetic,
       child: widget,
     );
   }
