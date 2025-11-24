@@ -86,6 +86,8 @@ class MarkdownWithCodeHighlight extends StatelessWidget {
     // Temporarily disable custom bold label line transformer to avoid
     // interfering with block parsing for complex documents.
     // components.insert(0, LabelValueLineMd());
+    // Render hex color codes with colored squares
+    components.insert(0, HexColorMd());
     // Ensure backslash-escaped punctuation renders literally (e.g., \*, \`, \[)
     // Must run before emphasis/links/code parsing to neutralize markers.
     components.insert(0, BackslashEscapeMd());
@@ -2389,6 +2391,65 @@ class ModernRadioMd extends BlockMd {
           Flexible(child: child),
         ],
       ),
+    );
+  }
+}
+
+/// Render hex color codes (e.g., #ff6ec7) as a colored square followed by the text
+class HexColorMd extends InlineMd {
+  @override
+  // Match hex color codes: # followed by exactly 3 or 6 hex digits
+  RegExp get exp => RegExp(r"#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})(?![0-9a-fA-F])");
+
+  @override
+  InlineSpan span(BuildContext context, String text, GptMarkdownConfig config) {
+    final m = exp.firstMatch(text);
+    if (m == null) return TextSpan(text: text, style: config.style);
+    
+    final hexCode = m.group(0) ?? ''; // Full match including #
+    final hexValue = m.group(1) ?? ''; // Just the hex digits
+    
+    // Convert 3-digit hex to 6-digit hex
+    String fullHex;
+    if (hexValue.length == 3) {
+      fullHex = hexValue.split('').map((c) => c + c).join();
+    } else {
+      fullHex = hexValue;
+    }
+    
+    // Parse the hex color
+    final r = int.parse(fullHex.substring(0, 2), radix: 16);
+    final g = int.parse(fullHex.substring(2, 4), radix: 16);
+    final b = int.parse(fullHex.substring(4, 6), radix: 16);
+    final color = Color.fromARGB(255, r, g, b);
+    
+    // Create a widget with a colored square and the text
+    final widget = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          margin: const EdgeInsets.only(right: 4),
+          decoration: BoxDecoration(
+            color: color,
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+              width: 0.5,
+            ),
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        Text(
+          hexCode,
+          style: config.style,
+        ),
+      ],
+    );
+    
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.middle,
+      child: widget,
     );
   }
 }
