@@ -2417,15 +2417,22 @@ class HexColorMd extends InlineMd {
       fullHex = hexValue;
     }
     
-    // Parse the hex color
-    final r = int.parse(fullHex.substring(0, 2), radix: 16);
-    final g = int.parse(fullHex.substring(2, 4), radix: 16);
-    final b = int.parse(fullHex.substring(4, 6), radix: 16);
-    final color = Color.fromARGB(255, r, g, b);
+    // Parse the hex color with error handling
+    Color color;
+    try {
+      final r = int.parse(fullHex.substring(0, 2), radix: 16);
+      final g = int.parse(fullHex.substring(2, 4), radix: 16);
+      final b = int.parse(fullHex.substring(4, 6), radix: 16);
+      color = Color.fromARGB(255, r, g, b);
+    } catch (e) {
+      // If parsing fails (shouldn't happen with our regex), just return plain text
+      return TextSpan(text: text, style: config.style);
+    }
     
     // Create a widget with a colored square and the text
     final widget = Row(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
           width: 12,
