@@ -86,8 +86,10 @@ class MarkdownWithCodeHighlight extends StatelessWidget {
     // Temporarily disable custom bold label line transformer to avoid
     // interfering with block parsing for complex documents.
     // components.insert(0, LabelValueLineMd());
-    // Render hex color codes with colored squares
-    components.insert(0, HexColorMd());
+    // Render hex color codes with colored squares (if enabled)
+    if (settings.enableHexColorRendering) {
+      components.insert(0, HexColorMd());
+    }
     // Ensure backslash-escaped punctuation renders literally (e.g., \*, \`, \[)
     // Must run before emphasis/links/code parsing to neutralize markers.
     components.insert(0, BackslashEscapeMd());
