@@ -315,6 +315,9 @@ class _ModelDetailSheetState extends State<_ModelDetailSheet> with SingleTickerP
           ],
         ),
       ),
+      // Input/Output modalities and Abilities are only shown for chat models.
+      // Embedding models are specialized for text vectorization and don't support
+      // conversational features, multimodal input/output, or tool calling.
       if (_type == ModelType.chat)
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),

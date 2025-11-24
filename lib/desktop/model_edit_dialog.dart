@@ -258,6 +258,9 @@ class _ModelEditDialogBodyState extends State<_ModelEditDialogBody> with SingleT
       _label(context, l10n.modelDetailSheetModelTypeLabel),
       const SizedBox(height: 6),
       _SegmentedSingle(options: [l10n.modelDetailSheetChatType, l10n.modelDetailSheetEmbeddingType], value: _type == ModelType.chat ? 0 : 1, onChanged: (i) => setState(() => _type = i == 0 ? ModelType.chat : ModelType.embedding)),
+      // Input/Output modalities and Abilities are only relevant for chat models.
+      // Embedding models are specialized for text vectorization and don't support
+      // conversational features, multimodal input/output, or tool calling.
       if (_type == ModelType.chat) ...[
         const SizedBox(height: 12),
         _label(context, l10n.modelDetailSheetInputModesLabel),
