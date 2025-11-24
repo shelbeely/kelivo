@@ -2415,12 +2415,9 @@ class HexColorMd extends InlineMd {
     }
     
     // Convert 3-digit hex to 6-digit hex
-    String fullHex;
-    if (hexValue.length == 3) {
-      fullHex = hexValue.split('').map((c) => c + c).join();
-    } else {
-      fullHex = hexValue;
-    }
+    final fullHex = hexValue.length == 3
+        ? '${hexValue[0]}${hexValue[0]}${hexValue[1]}${hexValue[1]}${hexValue[2]}${hexValue[2]}'
+        : hexValue;
     
     // Parse the hex color with error handling
     Color color;
@@ -2434,10 +2431,23 @@ class HexColorMd extends InlineMd {
       return TextSpan(text: text, style: config.style);
     }
     
-    // Create a widget with a colored square and the text
-    final widget = Row(
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.baseline,
+      baseline: TextBaseline.alphabetic,
+      child: _buildColorWidget(context, color, hexCode, config),
+    );
+  }
+
+  Widget _buildColorWidget(
+    BuildContext context,
+    Color color,
+    String hexCode,
+    GptMarkdownConfig config,
+  ) {
+    return Row(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
       children: [
         Container(
           width: 12,
@@ -2457,12 +2467,6 @@ class HexColorMd extends InlineMd {
           style: config.style,
         ),
       ],
-    );
-    
-    return WidgetSpan(
-      alignment: PlaceholderAlignment.baseline,
-      baseline: TextBaseline.alphabetic,
-      child: widget,
     );
   }
 }
