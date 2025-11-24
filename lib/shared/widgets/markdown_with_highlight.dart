@@ -86,6 +86,10 @@ class MarkdownWithCodeHighlight extends StatelessWidget {
     // Temporarily disable custom bold label line transformer to avoid
     // interfering with block parsing for complex documents.
     // components.insert(0, LabelValueLineMd());
+    // Render hex color codes with colored squares (if enabled)
+    if (settings.enableHexColorRendering) {
+      components.insert(0, HexColorMd());
+    }
     // Ensure backslash-escaped punctuation renders literally (e.g., \*, \`, \[)
     // Must run before emphasis/links/code parsing to neutralize markers.
     components.insert(0, BackslashEscapeMd());
@@ -2389,6 +2393,82 @@ class ModernRadioMd extends BlockMd {
           Flexible(child: child),
         ],
       ),
+    );
+  }
+}
+
+/// Render hex color codes (e.g., #ff6ec7) as a colored square followed by the text
+class HexColorMd extends InlineMd {
+  @override
+  // Match hex color codes: # followed by exactly 3 or 6 hex digits
+  RegExp get exp => RegExp(r"#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})(?![0-9a-fA-F])");
+
+  @override
+  InlineSpan span(BuildContext context, String text, GptMarkdownConfig config) {
+    final m = exp.firstMatch(text);
+    if (m == null) return TextSpan(text: text, style: config.style);
+    
+    final hexCode = m.group(0); // Full match including #
+    final hexValue = m.group(1); // Just the hex digits
+    
+    // Validate that we have the expected groups (should always be true with our regex)
+    if (hexCode == null || hexValue == null || hexValue.isEmpty) {
+      return TextSpan(text: text, style: config.style);
+    }
+    
+    // Convert 3-digit hex to 6-digit hex
+    final fullHex = hexValue.length == 3
+        ? '${hexValue[0]}${hexValue[0]}${hexValue[1]}${hexValue[1]}${hexValue[2]}${hexValue[2]}'
+        : hexValue;
+    
+    // Parse the hex color with error handling
+    Color color;
+    try {
+      final r = int.parse(fullHex.substring(0, 2), radix: 16);
+      final g = int.parse(fullHex.substring(2, 4), radix: 16);
+      final b = int.parse(fullHex.substring(4, 6), radix: 16);
+      color = Color.fromARGB(255, r, g, b);
+    } catch (e) {
+      // If parsing fails (shouldn't happen with our regex), just return plain text
+      return TextSpan(text: text, style: config.style);
+    }
+    
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.baseline,
+      baseline: TextBaseline.alphabetic,
+      child: _buildColorWidget(context, color, hexCode, config),
+    );
+  }
+
+  Widget _buildColorWidget(
+    BuildContext context,
+    Color color,
+    String hexCode,
+    GptMarkdownConfig config,
+  ) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          margin: const EdgeInsets.only(right: 4),
+          decoration: BoxDecoration(
+            color: color,
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+              width: 0.5,
+            ),
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        Text(
+          hexCode,
+          style: config.style,
+        ),
+      ],
     );
   }
 }

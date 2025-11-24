@@ -590,6 +590,7 @@
   "displaySettingsPageEnableMathSubtitle": "Render LaTeX math (inline and block)",
   "displaySettingsPageEnableUserMarkdownTitle": "Render user messages with Markdown",
   "displaySettingsPageEnableReasoningMarkdownTitle": "Render reasoning (thinking) with Markdown",
+  "displaySettingsPageEnableHexColorRenderingTitle": "Hex Color Preview",
   "displaySettingsPageMobileCodeBlockWrapTitle": "Mobile Code Block Word Wrap",
   "messageExportSheetFormatTitle": "Export Format",
   "messageExportSheetMarkdown": "Markdown",

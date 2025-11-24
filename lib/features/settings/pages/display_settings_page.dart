@@ -998,6 +998,8 @@ class RenderingSettingsPage extends StatelessWidget {
           _iosSwitchRow(context, icon: Lucide.TextSelect, label: l10n.displaySettingsPageEnableUserMarkdownTitle, value: sp.enableUserMarkdown, onChanged: (v) => context.read<SettingsProvider>().setEnableUserMarkdown(v)),
           _iosDivider(context),
           _iosSwitchRow(context, icon: Lucide.Brain, label: l10n.displaySettingsPageEnableReasoningMarkdownTitle, value: sp.enableReasoningMarkdown, onChanged: (v) => context.read<SettingsProvider>().setEnableReasoningMarkdown(v)),
+          _iosDivider(context),
+          _iosSwitchRow(context, icon: Lucide.Palette, label: l10n.displaySettingsPageEnableHexColorRenderingTitle, value: sp.enableHexColorRendering, onChanged: (v) => context.read<SettingsProvider>().setEnableHexColorRendering(v)),
           if (Platform.isAndroid || Platform.isIOS) ...[
             _iosDivider(context),
             _iosSwitchRow(context, icon: Lucide.WrapText, label: l10n.displaySettingsPageMobileCodeBlockWrapTitle, value: sp.mobileCodeBlockWrap, onChanged: (v) => context.read<SettingsProvider>().setMobileCodeBlockWrap(v)),

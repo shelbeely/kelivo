@@ -55,6 +55,7 @@ class SettingsProvider extends ChangeNotifier {
   static const String _displayEnableMathRenderingKey = 'display_enable_math_rendering_v1';
   static const String _displayEnableUserMarkdownKey = 'display_enable_user_markdown_v1';
   static const String _displayEnableReasoningMarkdownKey = 'display_enable_reasoning_markdown_v1';
+  static const String _displayEnableHexColorRenderingKey = 'display_enable_hex_color_rendering_v1';
   static const String _displayShowChatListDateKey = 'display_show_chat_list_date_v1';
   static const String _displayMobileCodeBlockWrapKey = 'display_mobile_code_block_wrap_v1';
   static const String _displayDesktopAutoSwitchTopicsKey = 'display_desktop_auto_switch_topics_v1';
@@ -319,6 +320,7 @@ class SettingsProvider extends ChangeNotifier {
     _enableMathRendering = prefs.getBool(_displayEnableMathRenderingKey) ?? true;
     _enableUserMarkdown = prefs.getBool(_displayEnableUserMarkdownKey) ?? true;
     _enableReasoningMarkdown = prefs.getBool(_displayEnableReasoningMarkdownKey) ?? true;
+    _enableHexColorRendering = prefs.getBool(_displayEnableHexColorRenderingKey) ?? true;
     _showChatListDate = prefs.getBool(_displayShowChatListDateKey) ?? false;
     _mobileCodeBlockWrap = prefs.getBool(_displayMobileCodeBlockWrapKey) ?? false;
     _desktopAutoSwitchTopics = prefs.getBool(_displayDesktopAutoSwitchTopicsKey) ?? false;
@@ -1565,6 +1567,17 @@ DO NOT GIVE ANSWERS OR DO HOMEWORK FOR THE USER. If the user asks a math or logi
     await prefs.setBool(_displayEnableReasoningMarkdownKey, v);
   }
 
+  // Display: render hex color codes with colored squares
+  bool _enableHexColorRendering = true;
+  bool get enableHexColorRendering => _enableHexColorRendering;
+  Future<void> setEnableHexColorRendering(bool v) async {
+    if (_enableHexColorRendering == v) return;
+    _enableHexColorRendering = v;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_displayEnableHexColorRenderingKey, v);
+  }
+
   // Display: show chat list date
   bool _showChatListDate = false;
   bool get showChatListDate => _showChatListDate;
@@ -1805,6 +1818,7 @@ DO NOT GIVE ANSWERS OR DO HOMEWORK FOR THE USER. If the user asks a math or logi
     copy._enableMathRendering = _enableMathRendering;
     copy._enableUserMarkdown = _enableUserMarkdown;
     copy._enableReasoningMarkdown = _enableReasoningMarkdown;
+    copy._enableHexColorRendering = _enableHexColorRendering;
     copy._showChatListDate = _showChatListDate;
     copy._desktopAutoSwitchTopics = _desktopAutoSwitchTopics;
     copy._desktopShowTray = _desktopShowTray;
