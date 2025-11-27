@@ -36,6 +36,7 @@ import '../../../shared/widgets/ios_tactile.dart';
 import '../../../desktop/desktop_context_menu.dart';
 import '../../../desktop/menu_anchor.dart';
 import '../../../shared/widgets/emoji_text.dart';
+import '../../../generative_ui/inline_generative_ui.dart';
 
 class ChatMessageWidget extends StatefulWidget {
   final ChatMessage message;
@@ -74,6 +75,8 @@ class ChatMessageWidget extends StatefulWidget {
   final VoidCallback? onToggleTranslation;
   // MCP tool calls/results mixed-in cards
   final List<ToolUIPart>? toolParts;
+  // Generative UI action callback (for interactive UI blocks)
+  final void Function(Map<String, dynamic> action)? onGenerativeUIAction;
 
   const ChatMessageWidget({
     super.key,
@@ -107,6 +110,7 @@ class ChatMessageWidget extends StatefulWidget {
     this.translationExpanded = true,
     this.onToggleTranslation,
     this.toolParts,
+    this.onGenerativeUIAction,
   });
 
   @override
@@ -1282,6 +1286,51 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
                       defaultTargetPlatform == TargetPlatform.windows ||
                       defaultTargetPlatform == TargetPlatform.linux;
                   final double baseAssistant = isDesktop ? 14.0 : 15.7;
+                  
+                  // Check for generative UI content
+                  final guiResult = GenerativeUIDetector.parse(visualContent);
+                  
+                  if (guiResult.hasScreen) {
+                    // Render text before, generative UI, and text after
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (guiResult.text != null && guiResult.text!.isNotEmpty)
+                          SelectionArea(
+                            key: ValueKey('assistant_text_${widget.message.id}'),
+                            child: DefaultTextStyle.merge(
+                              style: TextStyle(fontSize: baseAssistant, height: 1.5),
+                              child: MarkdownWithCodeHighlight(
+                                text: guiResult.text!,
+                                onCitationTap: (id) => _handleCitationTap(id),
+                                baseStyle: TextStyle(fontSize: baseAssistant, height: 1.5),
+                              ),
+                            ),
+                          ),
+                        InlineGenerativeUI(
+                          screen: guiResult.screen!,
+                          onAction: widget.onGenerativeUIAction,
+                          reduceMotion: MediaQuery.of(context).disableAnimations,
+                        ),
+                        if (guiResult.textAfter != null && guiResult.textAfter!.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          SelectionArea(
+                            key: ValueKey('assistant_text_after_${widget.message.id}'),
+                            child: DefaultTextStyle.merge(
+                              style: TextStyle(fontSize: baseAssistant, height: 1.5),
+                              child: MarkdownWithCodeHighlight(
+                                text: guiResult.textAfter!,
+                                onCitationTap: (id) => _handleCitationTap(id),
+                                baseStyle: TextStyle(fontSize: baseAssistant, height: 1.5),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    );
+                  }
+                  
+                  // Regular markdown content
                   return SelectionArea(
                     key: ValueKey('assistant_${widget.message.id}_${widget.message.content.length}'),
                     child: DefaultTextStyle.merge(

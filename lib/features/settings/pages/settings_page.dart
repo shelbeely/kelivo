@@ -18,6 +18,7 @@ import '../../backup/pages/backup_page.dart';
 import '../../quick_phrase/pages/quick_phrases_page.dart';
 import '../../instruction_injection/pages/instruction_injection_page.dart';
 import 'network_proxy_page.dart';
+import '../../generative_ui/pages/generative_ui_demo_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/services/haptics.dart';
@@ -253,6 +254,17 @@ class SettingsPage extends StatelessWidget {
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const NetworkProxyPage()),
+                );
+              },
+            ),
+            _iosDivider(context),
+            _iosNavRow(
+              context,
+              icon: Lucide.Sparkles,
+              label: 'Generative UI Demo',
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const GenerativeUIDemoPage()),
                 );
               },
             ),
