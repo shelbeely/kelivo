@@ -12,29 +12,65 @@
 // See docs/generative-ui-notes.md for full documentation.
 
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter/material.dart';
 import 'schema.dart';
-import 'renderer.dart';
+import 'renderer.dart' show mapIconName;
 
 /// Detects if content contains a generative UI JSON block
 class GenerativeUIDetector {
-  /// Pattern to match JSON that looks like a generative UI screen
-  static final RegExp _screenPattern = RegExp(
-    r'\{[^{}]*"screenId"\s*:\s*"[^"]+"\s*,\s*[^{}]*"blocks"\s*:\s*\[',
-    multiLine: true,
-  );
+  /// Cache for parsed results to avoid re-parsing on rebuilds
+  static final Map<int, GenerativeUIParseResult> _cache = {};
 
   /// Check if content contains generative UI
   static bool containsGenerativeUI(String content) {
-    return _screenPattern.hasMatch(content);
+    // Quick check for required fields without complex regex
+    return content.contains('"screenId"') && content.contains('"blocks"');
   }
 
   /// Extract generative UI JSON from content
   /// Returns a tuple of (textBefore, Screen?, textAfter)
+  /// Results are cached by content hashCode
   static GenerativeUIParseResult parse(String content) {
-    // Try to find a JSON block that looks like a generative UI screen
-    final jsonStart = content.indexOf('{');
-    if (jsonStart == -1) {
+    // Check cache first
+    final cacheKey = content.hashCode;
+    if (_cache.containsKey(cacheKey)) {
+      return _cache[cacheKey]!;
+    }
+
+    final result = _parseInternal(content);
+    
+    // Cache the result (limit cache size)
+    if (_cache.length > 100) {
+      _cache.clear();
+    }
+    _cache[cacheKey] = result;
+    
+    return result;
+  }
+
+  /// Clear the parse cache
+  static void clearCache() {
+    _cache.clear();
+  }
+
+  /// Internal parsing logic
+  static GenerativeUIParseResult _parseInternal(String content) {
+    // Quick check: must have both screenId and blocks
+    if (!content.contains('"screenId"') || !content.contains('"blocks"')) {
+      return GenerativeUIParseResult(text: content);
+    }
+
+    // Find potential JSON object starts - look for patterns like {"screenId" or { "screenId"
+    // This is more reliable than just finding the first {
+    int jsonStart = -1;
+    
+    // Try to find the start of the generative UI JSON block
+    final screenIdPattern = RegExp(r'\{\s*"screenId"\s*:');
+    final match = screenIdPattern.firstMatch(content);
+    if (match != null) {
+      jsonStart = match.start;
+    } else {
       return GenerativeUIParseResult(text: content);
     }
 
@@ -99,8 +135,10 @@ class GenerativeUIDetector {
         screen: screen,
         textAfter: textAfter.isNotEmpty ? textAfter : null,
       );
-    } catch (e) {
-      // Not valid generative UI JSON
+    } catch (e, stackTrace) {
+      // Log the error for debugging but don't crash
+      debugPrint('[GenerativeUI] Failed to parse JSON: $e');
+      debugPrint('[GenerativeUI] JSON snippet: ${jsonStr.substring(0, jsonStr.length.clamp(0, 200))}...');
       return GenerativeUIParseResult(text: content);
     }
   }
