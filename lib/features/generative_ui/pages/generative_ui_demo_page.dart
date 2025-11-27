@@ -144,20 +144,18 @@ class _GenerativeUIDemoPageState extends State<GenerativeUIDemoPage> {
       )) {
         switch (progress) {
           case _GenerativeUILoading():
-            // Already showing loading
-            break;
+            // Loading state already set before loop
+            continue;
           case _GenerativeUIStreaming(:final partialContent):
             setState(() {
               _streamingContent = partialContent;
             });
-            break;
           case _GenerativeUIComplete(:final screen):
             setState(() {
               _currentScreen = screen;
               _isLoading = false;
               _streamingContent = null;
             });
-            break;
           case _GenerativeUIError(:final message):
             setState(() {
               _error = message;
@@ -166,7 +164,6 @@ class _GenerativeUIDemoPageState extends State<GenerativeUIDemoPage> {
               // Fall back to sample screen
               _currentScreen = _createFallbackScreen();
             });
-            break;
         }
       }
     } catch (e) {
@@ -301,15 +298,15 @@ class _GenerativeUIDemoPageState extends State<GenerativeUIDemoPage> {
               _currentScreen = screen;
               _isLoading = false;
             });
-            break;
           case _GenerativeUIError(:final message):
             setState(() {
               _error = message;
               _isLoading = false;
             });
-            break;
-          default:
-            break;
+          case _GenerativeUILoading():
+          case _GenerativeUIStreaming():
+            // Continue waiting for completion
+            continue;
         }
       }
     } catch (e) {

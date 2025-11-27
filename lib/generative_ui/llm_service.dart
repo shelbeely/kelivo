@@ -246,16 +246,16 @@ class GenerativeUIService {
     ];
 
     try {
-      // Use the existing ChatApiService to send the request
+      // Use the existing ChatApiService to send the request (non-streaming mode)
       final stream = ChatApiService.sendMessageStream(
         config: config,
         modelId: modelId,
         messages: messages,
         temperature: 0.7,
-        stream: false, // Non-streaming for simplicity
+        stream: false, // Non-streaming - returns complete response
       );
 
-      // Collect the full response
+      // Collect the full response (single chunk expected with stream: false)
       final buffer = StringBuffer();
       await for (final chunk in stream) {
         buffer.write(chunk.content);
