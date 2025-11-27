@@ -311,6 +311,135 @@ enum TextVariant {
   String toJson() => name;
 }
 
+/// Chip variant for styling
+enum ChipVariant {
+  assist,
+  filter,
+  input,
+  suggestion;
+
+  static ChipVariant? fromString(String? value) {
+    if (value == null) return null;
+    switch (value.toLowerCase()) {
+      case 'assist':
+        return ChipVariant.assist;
+      case 'filter':
+        return ChipVariant.filter;
+      case 'input':
+        return ChipVariant.input;
+      case 'suggestion':
+        return ChipVariant.suggestion;
+      default:
+        return null;
+    }
+  }
+
+  String toJson() => name;
+}
+
+/// Progress variant
+enum ProgressVariant {
+  linear,
+  circular;
+
+  static ProgressVariant? fromString(String? value) {
+    if (value == null) return null;
+    switch (value.toLowerCase()) {
+      case 'linear':
+        return ProgressVariant.linear;
+      case 'circular':
+        return ProgressVariant.circular;
+      default:
+        return null;
+    }
+  }
+
+  String toJson() => name;
+}
+
+/// FAB size variant
+enum FabSize {
+  small,
+  regular,
+  large,
+  extended;
+
+  static FabSize? fromString(String? value) {
+    if (value == null) return null;
+    switch (value.toLowerCase()) {
+      case 'small':
+        return FabSize.small;
+      case 'regular':
+        return FabSize.regular;
+      case 'large':
+        return FabSize.large;
+      case 'extended':
+        return FabSize.extended;
+      default:
+        return null;
+    }
+  }
+
+  String toJson() => name;
+}
+
+/// TextField variant
+enum TextFieldVariant {
+  filled,
+  outlined;
+
+  static TextFieldVariant? fromString(String? value) {
+    if (value == null) return null;
+    switch (value.toLowerCase()) {
+      case 'filled':
+        return TextFieldVariant.filled;
+      case 'outlined':
+        return TextFieldVariant.outlined;
+      default:
+        return null;
+    }
+  }
+
+  String toJson() => name;
+}
+
+/// Badge position
+enum BadgePosition {
+  topRight,
+  topLeft,
+  bottomRight,
+  bottomLeft;
+
+  static BadgePosition? fromString(String? value) {
+    if (value == null) return null;
+    switch (value.toLowerCase().replaceAll('_', '')) {
+      case 'topright':
+        return BadgePosition.topRight;
+      case 'topleft':
+        return BadgePosition.topLeft;
+      case 'bottomright':
+        return BadgePosition.bottomRight;
+      case 'bottomleft':
+        return BadgePosition.bottomLeft;
+      default:
+        return null;
+    }
+  }
+
+  String toJson() {
+    switch (this) {
+      case BadgePosition.topRight:
+        return 'top_right';
+      case BadgePosition.topLeft:
+        return 'top_left';
+      case BadgePosition.bottomRight:
+        return 'bottom_right';
+      case BadgePosition.bottomLeft:
+        return 'bottom_left';
+    }
+  }
+}
+
 // ===========================================================================
 // Block types (sealed class hierarchy)
 // ===========================================================================
@@ -476,6 +605,522 @@ class ButtonBlock extends Block {
         'action': action,
         if (role != null) 'role': role!.toJson(),
         if (layout != null) 'layout': layout!.toJson(),
+        if (emphasis != null) 'emphasis': emphasis!.toJson(),
+        if (surface != null) 'surface': surface!.toJson(),
+        if (motion != null) 'motion': motion!.toJson(),
+      };
+}
+
+/// Checkbox block: Toggle selection
+class CheckboxBlock extends Block {
+  final String? label;
+  final bool checked;
+  final bool? disabled;
+  final Map<String, dynamic>? action;
+
+  const CheckboxBlock({
+    this.label,
+    this.checked = false,
+    this.disabled,
+    this.action,
+    super.emphasis,
+    super.surface,
+    super.motion,
+  });
+
+  @override
+  String get type => 'checkbox';
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        if (label != null) 'label': label,
+        'checked': checked,
+        if (disabled != null) 'disabled': disabled,
+        if (action != null) 'action': action,
+        if (emphasis != null) 'emphasis': emphasis!.toJson(),
+        if (surface != null) 'surface': surface!.toJson(),
+        if (motion != null) 'motion': motion!.toJson(),
+      };
+}
+
+/// Switch block: On/off toggle
+class SwitchBlock extends Block {
+  final String? label;
+  final bool selected;
+  final bool? disabled;
+  final Map<String, dynamic>? action;
+
+  const SwitchBlock({
+    this.label,
+    this.selected = false,
+    this.disabled,
+    this.action,
+    super.emphasis,
+    super.surface,
+    super.motion,
+  });
+
+  @override
+  String get type => 'switch';
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        if (label != null) 'label': label,
+        'selected': selected,
+        if (disabled != null) 'disabled': disabled,
+        if (action != null) 'action': action,
+        if (emphasis != null) 'emphasis': emphasis!.toJson(),
+        if (surface != null) 'surface': surface!.toJson(),
+        if (motion != null) 'motion': motion!.toJson(),
+      };
+}
+
+/// Chip block: Filterable/selectable label
+class ChipBlock extends Block {
+  final String label;
+  final ChipVariant? variant;
+  final String? icon;
+  final bool? selected;
+  final bool? disabled;
+  final Map<String, dynamic>? action;
+
+  const ChipBlock({
+    required this.label,
+    this.variant,
+    this.icon,
+    this.selected,
+    this.disabled,
+    this.action,
+    super.emphasis,
+    super.surface,
+    super.motion,
+  });
+
+  @override
+  String get type => 'chip';
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        'label': label,
+        if (variant != null) 'variant': variant!.toJson(),
+        if (icon != null) 'icon': icon,
+        if (selected != null) 'selected': selected,
+        if (disabled != null) 'disabled': disabled,
+        if (action != null) 'action': action,
+        if (emphasis != null) 'emphasis': emphasis!.toJson(),
+        if (surface != null) 'surface': surface!.toJson(),
+        if (motion != null) 'motion': motion!.toJson(),
+      };
+}
+
+/// Progress block: Progress indicator
+class ProgressBlock extends Block {
+  final ProgressVariant? variant;
+  final double? value; // 0.0 to 1.0, null for indeterminate
+  final String? label;
+
+  const ProgressBlock({
+    this.variant,
+    this.value,
+    this.label,
+    super.emphasis,
+    super.surface,
+    super.motion,
+  });
+
+  @override
+  String get type => 'progress';
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        if (variant != null) 'variant': variant!.toJson(),
+        if (value != null) 'value': value,
+        if (label != null) 'label': label,
+        if (emphasis != null) 'emphasis': emphasis!.toJson(),
+        if (surface != null) 'surface': surface!.toJson(),
+        if (motion != null) 'motion': motion!.toJson(),
+      };
+}
+
+/// Divider block: Visual separator
+class DividerBlock extends Block {
+  final bool? inset;
+  final String? label;
+
+  const DividerBlock({
+    this.inset,
+    this.label,
+    super.emphasis,
+    super.surface,
+    super.motion,
+  });
+
+  @override
+  String get type => 'divider';
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        if (inset != null) 'inset': inset,
+        if (label != null) 'label': label,
+        if (emphasis != null) 'emphasis': emphasis!.toJson(),
+        if (surface != null) 'surface': surface!.toJson(),
+        if (motion != null) 'motion': motion!.toJson(),
+      };
+}
+
+/// IconButton block: Clickable icon
+class IconButtonBlock extends Block {
+  final String icon;
+  final String? tooltip;
+  final bool? filled;
+  final bool? disabled;
+  final Map<String, dynamic>? action;
+
+  const IconButtonBlock({
+    required this.icon,
+    this.tooltip,
+    this.filled,
+    this.disabled,
+    this.action,
+    super.emphasis,
+    super.surface,
+    super.motion,
+  });
+
+  @override
+  String get type => 'icon_button';
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        'icon': icon,
+        if (tooltip != null) 'tooltip': tooltip,
+        if (filled != null) 'filled': filled,
+        if (disabled != null) 'disabled': disabled,
+        if (action != null) 'action': action,
+        if (emphasis != null) 'emphasis': emphasis!.toJson(),
+        if (surface != null) 'surface': surface!.toJson(),
+        if (motion != null) 'motion': motion!.toJson(),
+      };
+}
+
+/// FAB block: Floating action button
+class FabBlock extends Block {
+  final String? label;
+  final String? icon;
+  final FabSize? size;
+  final Map<String, dynamic>? action;
+
+  const FabBlock({
+    this.label,
+    this.icon,
+    this.size,
+    this.action,
+    super.emphasis,
+    super.surface,
+    super.motion,
+  });
+
+  @override
+  String get type => 'fab';
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        if (label != null) 'label': label,
+        if (icon != null) 'icon': icon,
+        if (size != null) 'size': size!.toJson(),
+        if (action != null) 'action': action,
+        if (emphasis != null) 'emphasis': emphasis!.toJson(),
+        if (surface != null) 'surface': surface!.toJson(),
+        if (motion != null) 'motion': motion!.toJson(),
+      };
+}
+
+/// TextField block: Text input field
+class TextFieldBlock extends Block {
+  final String? label;
+  final String? placeholder;
+  final String? value;
+  final TextFieldVariant? variant;
+  final String? leadingIcon;
+  final String? trailingIcon;
+  final bool? disabled;
+  final bool? readOnly;
+  final String? errorText;
+  final String? helperText;
+  final String? fieldId; // Used to identify field for action callbacks
+
+  const TextFieldBlock({
+    this.label,
+    this.placeholder,
+    this.value,
+    this.variant,
+    this.leadingIcon,
+    this.trailingIcon,
+    this.disabled,
+    this.readOnly,
+    this.errorText,
+    this.helperText,
+    this.fieldId,
+    super.emphasis,
+    super.surface,
+    super.motion,
+  });
+
+  @override
+  String get type => 'text_field';
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        if (label != null) 'label': label,
+        if (placeholder != null) 'placeholder': placeholder,
+        if (value != null) 'value': value,
+        if (variant != null) 'variant': variant!.toJson(),
+        if (leadingIcon != null) 'leadingIcon': leadingIcon,
+        if (trailingIcon != null) 'trailingIcon': trailingIcon,
+        if (disabled != null) 'disabled': disabled,
+        if (readOnly != null) 'readOnly': readOnly,
+        if (errorText != null) 'errorText': errorText,
+        if (helperText != null) 'helperText': helperText,
+        if (fieldId != null) 'fieldId': fieldId,
+        if (emphasis != null) 'emphasis': emphasis!.toJson(),
+        if (surface != null) 'surface': surface!.toJson(),
+        if (motion != null) 'motion': motion!.toJson(),
+      };
+}
+
+/// Slider block: Value range input
+class SliderBlock extends Block {
+  final double value;
+  final double? min;
+  final double? max;
+  final int? divisions;
+  final String? label;
+  final bool? disabled;
+  final String? fieldId;
+
+  const SliderBlock({
+    required this.value,
+    this.min,
+    this.max,
+    this.divisions,
+    this.label,
+    this.disabled,
+    this.fieldId,
+    super.emphasis,
+    super.surface,
+    super.motion,
+  });
+
+  @override
+  String get type => 'slider';
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        'value': value,
+        if (min != null) 'min': min,
+        if (max != null) 'max': max,
+        if (divisions != null) 'divisions': divisions,
+        if (label != null) 'label': label,
+        if (disabled != null) 'disabled': disabled,
+        if (fieldId != null) 'fieldId': fieldId,
+        if (emphasis != null) 'emphasis': emphasis!.toJson(),
+        if (surface != null) 'surface': surface!.toJson(),
+        if (motion != null) 'motion': motion!.toJson(),
+      };
+}
+
+/// Badge block: Notification badge (wraps another block)
+class BadgeBlock extends Block {
+  final Block? child;
+  final String? label; // Badge text, empty or null for dot badge
+  final BadgePosition? position;
+
+  const BadgeBlock({
+    this.child,
+    this.label,
+    this.position,
+    super.emphasis,
+    super.surface,
+    super.motion,
+  });
+
+  @override
+  String get type => 'badge';
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        if (child != null) 'child': child!.toJson(),
+        if (label != null) 'label': label,
+        if (position != null) 'position': position!.toJson(),
+        if (emphasis != null) 'emphasis': emphasis!.toJson(),
+        if (surface != null) 'surface': surface!.toJson(),
+        if (motion != null) 'motion': motion!.toJson(),
+      };
+}
+
+/// Image block: Display an image
+class ImageBlock extends Block {
+  final String src; // URL or asset path
+  final String? alt;
+  final double? width;
+  final double? height;
+  final String? fit; // contain, cover, fill, etc.
+
+  const ImageBlock({
+    required this.src,
+    this.alt,
+    this.width,
+    this.height,
+    this.fit,
+    super.emphasis,
+    super.surface,
+    super.motion,
+  });
+
+  @override
+  String get type => 'image';
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        'src': src,
+        if (alt != null) 'alt': alt,
+        if (width != null) 'width': width,
+        if (height != null) 'height': height,
+        if (fit != null) 'fit': fit,
+        if (emphasis != null) 'emphasis': emphasis!.toJson(),
+        if (surface != null) 'surface': surface!.toJson(),
+        if (motion != null) 'motion': motion!.toJson(),
+      };
+}
+
+/// Avatar block: User/entity avatar
+class AvatarBlock extends Block {
+  final String? imageUrl;
+  final String? initials;
+  final String? icon;
+  final double? size;
+
+  const AvatarBlock({
+    this.imageUrl,
+    this.initials,
+    this.icon,
+    this.size,
+    super.emphasis,
+    super.surface,
+    super.motion,
+  });
+
+  @override
+  String get type => 'avatar';
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        if (imageUrl != null) 'imageUrl': imageUrl,
+        if (initials != null) 'initials': initials,
+        if (icon != null) 'icon': icon,
+        if (size != null) 'size': size,
+        if (emphasis != null) 'emphasis': emphasis!.toJson(),
+        if (surface != null) 'surface': surface!.toJson(),
+        if (motion != null) 'motion': motion!.toJson(),
+      };
+}
+
+/// Row block: Horizontal layout container
+class RowBlock extends Block {
+  final List<Block> children;
+  final String? mainAxisAlignment; // start, end, center, spaceBetween, spaceAround, spaceEvenly
+  final String? crossAxisAlignment; // start, end, center, stretch, baseline
+  final double? spacing;
+
+  const RowBlock({
+    required this.children,
+    this.mainAxisAlignment,
+    this.crossAxisAlignment,
+    this.spacing,
+    super.emphasis,
+    super.surface,
+    super.motion,
+  });
+
+  @override
+  String get type => 'row';
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        'children': children.map((c) => c.toJson()).toList(),
+        if (mainAxisAlignment != null) 'mainAxisAlignment': mainAxisAlignment,
+        if (crossAxisAlignment != null) 'crossAxisAlignment': crossAxisAlignment,
+        if (spacing != null) 'spacing': spacing,
+        if (emphasis != null) 'emphasis': emphasis!.toJson(),
+        if (surface != null) 'surface': surface!.toJson(),
+        if (motion != null) 'motion': motion!.toJson(),
+      };
+}
+
+/// Column block: Vertical layout container
+class ColumnBlock extends Block {
+  final List<Block> children;
+  final String? mainAxisAlignment;
+  final String? crossAxisAlignment;
+  final double? spacing;
+
+  const ColumnBlock({
+    required this.children,
+    this.mainAxisAlignment,
+    this.crossAxisAlignment,
+    this.spacing,
+    super.emphasis,
+    super.surface,
+    super.motion,
+  });
+
+  @override
+  String get type => 'column';
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        'children': children.map((c) => c.toJson()).toList(),
+        if (mainAxisAlignment != null) 'mainAxisAlignment': mainAxisAlignment,
+        if (crossAxisAlignment != null) 'crossAxisAlignment': crossAxisAlignment,
+        if (spacing != null) 'spacing': spacing,
+        if (emphasis != null) 'emphasis': emphasis!.toJson(),
+        if (surface != null) 'surface': surface!.toJson(),
+        if (motion != null) 'motion': motion!.toJson(),
+      };
+}
+
+/// Spacer block: Flexible space
+class SpacerBlock extends Block {
+  final double? size; // Fixed size, or null for flexible
+
+  const SpacerBlock({
+    this.size,
+    super.emphasis,
+    super.surface,
+    super.motion,
+  });
+
+  @override
+  String get type => 'spacer';
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        if (size != null) 'size': size,
         if (emphasis != null) 'emphasis': emphasis!.toJson(),
         if (surface != null) 'surface': surface!.toJson(),
         if (motion != null) 'motion': motion!.toJson(),
@@ -669,9 +1314,227 @@ class ScreenParser {
           motion: motion,
         );
 
+      case 'checkbox':
+        return CheckboxBlock(
+          label: json['label'] as String?,
+          checked: json['checked'] as bool? ?? false,
+          disabled: json['disabled'] as bool?,
+          action: _parseAction(json['action']),
+          emphasis: emphasis,
+          surface: surface,
+          motion: motion,
+        );
+
+      case 'switch':
+        return SwitchBlock(
+          label: json['label'] as String?,
+          selected: json['selected'] as bool? ?? false,
+          disabled: json['disabled'] as bool?,
+          action: _parseAction(json['action']),
+          emphasis: emphasis,
+          surface: surface,
+          motion: motion,
+        );
+
+      case 'chip':
+        final label = json['label'] as String?;
+        if (label == null || label.isEmpty) return null;
+        return ChipBlock(
+          label: label,
+          variant: ChipVariant.fromString(json['variant'] as String?),
+          icon: json['icon'] as String?,
+          selected: json['selected'] as bool?,
+          disabled: json['disabled'] as bool?,
+          action: _parseAction(json['action']),
+          emphasis: emphasis,
+          surface: surface,
+          motion: motion,
+        );
+
+      case 'progress':
+        return ProgressBlock(
+          variant: ProgressVariant.fromString(json['variant'] as String?),
+          value: (json['value'] as num?)?.toDouble(),
+          label: json['label'] as String?,
+          emphasis: emphasis,
+          surface: surface,
+          motion: motion,
+        );
+
+      case 'divider':
+        return DividerBlock(
+          inset: json['inset'] as bool?,
+          label: json['label'] as String?,
+          emphasis: emphasis,
+          surface: surface,
+          motion: motion,
+        );
+
+      case 'icon_button':
+      case 'iconbutton':
+        final icon = json['icon'] as String?;
+        if (icon == null || icon.isEmpty) return null;
+        return IconButtonBlock(
+          icon: icon,
+          tooltip: json['tooltip'] as String?,
+          filled: json['filled'] as bool?,
+          disabled: json['disabled'] as bool?,
+          action: _parseAction(json['action']),
+          emphasis: emphasis,
+          surface: surface,
+          motion: motion,
+        );
+
+      case 'fab':
+        return FabBlock(
+          label: json['label'] as String?,
+          icon: json['icon'] as String?,
+          size: FabSize.fromString(json['size'] as String?),
+          action: _parseAction(json['action']),
+          emphasis: emphasis,
+          surface: surface,
+          motion: motion,
+        );
+
+      case 'text_field':
+      case 'textfield':
+        return TextFieldBlock(
+          label: json['label'] as String?,
+          placeholder: json['placeholder'] as String?,
+          value: json['value'] as String?,
+          variant: TextFieldVariant.fromString(json['variant'] as String?),
+          leadingIcon: json['leadingIcon'] as String?,
+          trailingIcon: json['trailingIcon'] as String?,
+          disabled: json['disabled'] as bool?,
+          readOnly: json['readOnly'] as bool?,
+          errorText: json['errorText'] as String?,
+          helperText: json['helperText'] as String?,
+          fieldId: json['fieldId'] as String?,
+          emphasis: emphasis,
+          surface: surface,
+          motion: motion,
+        );
+
+      case 'slider':
+        final value = (json['value'] as num?)?.toDouble();
+        if (value == null) return null;
+        return SliderBlock(
+          value: value,
+          min: (json['min'] as num?)?.toDouble(),
+          max: (json['max'] as num?)?.toDouble(),
+          divisions: json['divisions'] as int?,
+          label: json['label'] as String?,
+          disabled: json['disabled'] as bool?,
+          fieldId: json['fieldId'] as String?,
+          emphasis: emphasis,
+          surface: surface,
+          motion: motion,
+        );
+
+      case 'badge':
+        Block? child;
+        final childJson = json['child'];
+        if (childJson is Map<String, dynamic>) {
+          child = _parseBlock(childJson);
+        }
+        return BadgeBlock(
+          child: child,
+          label: json['label'] as String?,
+          position: BadgePosition.fromString(json['position'] as String?),
+          emphasis: emphasis,
+          surface: surface,
+          motion: motion,
+        );
+
+      case 'image':
+        final src = json['src'] as String?;
+        if (src == null || src.isEmpty) return null;
+        return ImageBlock(
+          src: src,
+          alt: json['alt'] as String?,
+          width: (json['width'] as num?)?.toDouble(),
+          height: (json['height'] as num?)?.toDouble(),
+          fit: json['fit'] as String?,
+          emphasis: emphasis,
+          surface: surface,
+          motion: motion,
+        );
+
+      case 'avatar':
+        return AvatarBlock(
+          imageUrl: json['imageUrl'] as String?,
+          initials: json['initials'] as String?,
+          icon: json['icon'] as String?,
+          size: (json['size'] as num?)?.toDouble(),
+          emphasis: emphasis,
+          surface: surface,
+          motion: motion,
+        );
+
+      case 'row':
+        final childrenJson = json['children'] as List<dynamic>?;
+        if (childrenJson == null || childrenJson.isEmpty) return null;
+        final children = <Block>[];
+        for (final c in childrenJson) {
+          if (c is Map<String, dynamic>) {
+            final parsed = _parseBlock(c);
+            if (parsed != null) children.add(parsed);
+          }
+        }
+        if (children.isEmpty) return null;
+        return RowBlock(
+          children: children,
+          mainAxisAlignment: json['mainAxisAlignment'] as String?,
+          crossAxisAlignment: json['crossAxisAlignment'] as String?,
+          spacing: (json['spacing'] as num?)?.toDouble(),
+          emphasis: emphasis,
+          surface: surface,
+          motion: motion,
+        );
+
+      case 'column':
+        final childrenJson = json['children'] as List<dynamic>?;
+        if (childrenJson == null || childrenJson.isEmpty) return null;
+        final children = <Block>[];
+        for (final c in childrenJson) {
+          if (c is Map<String, dynamic>) {
+            final parsed = _parseBlock(c);
+            if (parsed != null) children.add(parsed);
+          }
+        }
+        if (children.isEmpty) return null;
+        return ColumnBlock(
+          children: children,
+          mainAxisAlignment: json['mainAxisAlignment'] as String?,
+          crossAxisAlignment: json['crossAxisAlignment'] as String?,
+          spacing: (json['spacing'] as num?)?.toDouble(),
+          emphasis: emphasis,
+          surface: surface,
+          motion: motion,
+        );
+
+      case 'spacer':
+        return SpacerBlock(
+          size: (json['size'] as num?)?.toDouble(),
+          emphasis: emphasis,
+          surface: surface,
+          motion: motion,
+        );
+
       default:
         // Unknown block type - skip
         return null;
     }
+  }
+
+  /// Parse an action object from JSON
+  static Map<String, dynamic>? _parseAction(dynamic actionRaw) {
+    if (actionRaw == null) return null;
+    if (actionRaw is Map) {
+      return actionRaw.cast<String, dynamic>();
+    } else if (actionRaw is String) {
+      return {'type': actionRaw};
+    }
+    return null;
   }
 }

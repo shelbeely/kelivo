@@ -1,10 +1,10 @@
 // Generative UI Demo Page
 //
-// This page demonstrates the generative UI feature by:
-// 1. Gathering real app data (user info, chat counts, etc.)
-// 2. Calling the LLM to generate a UI specification
-// 3. Rendering it via the GenerativeScreen widget
-// 4. Handling button actions to update the UI
+// This page demonstrates the Cline-like generative UI feature:
+// 1. Maintains a conversation session with the LLM
+// 2. User interactions are sent back to the LLM as events
+// 3. LLM responds with updated UI based on user actions
+// 4. Creates an interactive, conversational UI experience
 //
 // See docs/generative-ui-notes.md for full documentation.
 
@@ -13,7 +13,6 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatf
 import 'package:provider/provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/providers/user_provider.dart';
-import '../../../core/providers/chat_provider.dart';
 import '../../../core/providers/assistant_provider.dart';
 import '../../../core/services/chat/chat_service.dart';
 import '../../../l10n/app_localizations.dart';
@@ -29,18 +28,28 @@ class GenerativeUIDemoPage extends StatefulWidget {
 }
 
 class _GenerativeUIDemoPageState extends State<GenerativeUIDemoPage> {
+  GenerativeUISession? _session;
   Screen? _currentScreen;
   bool _isLoading = false;
   String? _error;
   String? _streamingContent;
+  final TextEditingController _messageController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    // Generate initial screen on load
+    // Initialize session on load
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _generateDashboard();
+      _initSession();
     });
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   /// Get the device type for UI context
@@ -99,11 +108,9 @@ class _GenerativeUIDemoPageState extends State<GenerativeUIDemoPage> {
     );
   }
 
-  /// Generate a dashboard screen
-  Future<void> _generateDashboard() async {
+  /// Initialize the conversation session
+  Future<void> _initSession() async {
     final settings = context.read<SettingsProvider>();
-
-    // Check if we have a configured model
     final providerKey = settings.currentModelProvider;
     final modelId = settings.currentModelId;
 
@@ -112,8 +119,35 @@ class _GenerativeUIDemoPageState extends State<GenerativeUIDemoPage> {
       setState(() {
         _currentScreen = _createFallbackScreen();
         _isLoading = false;
-        _error = null;
+        _error = 'No AI model configured. Using static demo UI.';
       });
+      return;
+    }
+
+    final config = settings.getProviderConfig(providerKey);
+    final userContext = _buildUserContext();
+
+    setState(() {
+      _session = GenerativeUISession(
+        config: config,
+        modelId: modelId,
+        userContext: userContext,
+      );
+    });
+
+    // Start with a dashboard request
+    await _sendMessage(
+      'Generate a personalized dashboard for this AI chat application. '
+      'Show the user\'s stats, recent activity, and quick actions. '
+      'Make it feel welcoming and interactive. Include some form inputs '
+      'and toggles so the user can interact with the UI.',
+    );
+  }
+
+  /// Send a text message to the LLM
+  Future<void> _sendMessage(String text) async {
+    if (_session == null) {
+      await _initSession();
       return;
     }
 
@@ -124,57 +158,128 @@ class _GenerativeUIDemoPageState extends State<GenerativeUIDemoPage> {
     });
 
     try {
-      final config = settings.getProviderConfig(providerKey);
-      final service = GenerativeUIService(
-        config: config,
-        modelId: modelId,
-      );
-
-      final userContext = _buildUserContext();
       final appContext = _buildAppContext();
 
-      // Use streaming for better UX
-      await for (final progress in service.generateScreenStream(
-        instruction: 'Generate a personalized dashboard for this AI chat application. '
-            'Show the user\'s stats, recent activity, and quick actions. '
-            'Make it feel welcoming and express the AI-powered nature of the app.',
-        userContext: userContext,
+      await for (final progress in _session!.sendMessage(
+        text: text,
         appContext: appContext,
-        previousScreen: _currentScreen,
       )) {
-        switch (progress) {
-          case _GenerativeUILoading():
-            // Loading state already set before loop
-            continue;
-          case _GenerativeUIStreaming(:final partialContent):
-            setState(() {
-              _streamingContent = partialContent;
-            });
-          case _GenerativeUIComplete(:final screen):
-            setState(() {
-              _currentScreen = screen;
-              _isLoading = false;
-              _streamingContent = null;
-            });
-          case _GenerativeUIError(:final message):
-            setState(() {
-              _error = message;
-              _isLoading = false;
-              _streamingContent = null;
-              // Fall back to sample screen
-              _currentScreen = _createFallbackScreen();
-            });
-        }
+        _handleProgress(progress);
       }
     } catch (e) {
       setState(() {
         _error = e.toString();
         _isLoading = false;
-        _streamingContent = null;
-        // Fall back to sample screen
-        _currentScreen = _createFallbackScreen();
+        if (_currentScreen == null) {
+          _currentScreen = _createFallbackScreen();
+        }
       });
     }
+  }
+
+  /// Send a user interaction event to the LLM
+  Future<void> _sendInteraction(Map<String, dynamic> action) async {
+    if (_session == null) {
+      // Handle locally if no session
+      _handleLocalAction(action);
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+      _streamingContent = null;
+    });
+
+    try {
+      final event = UIInteractionEvent.fromAction(action);
+      final appContext = _buildAppContext();
+
+      await for (final progress in _session!.sendInteraction(
+        event: event,
+        appContext: appContext,
+      )) {
+        _handleProgress(progress);
+      }
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  /// Handle progress updates from LLM
+  void _handleProgress(GenerativeUIProgress progress) {
+    switch (progress) {
+      case _GenerativeUILoading():
+        // Already showing loading
+        break;
+      case _GenerativeUIStreaming(:final partialContent):
+        setState(() {
+          _streamingContent = partialContent;
+        });
+        break;
+      case _GenerativeUIComplete(:final screen):
+        setState(() {
+          _currentScreen = screen;
+          _isLoading = false;
+          _streamingContent = null;
+        });
+        break;
+      case _GenerativeUIError(:final message):
+        setState(() {
+          _error = message;
+          _isLoading = false;
+          _streamingContent = null;
+          if (_currentScreen == null) {
+            _currentScreen = _createFallbackScreen();
+          }
+        });
+        break;
+    }
+  }
+
+  /// Handle actions locally when no LLM session
+  void _handleLocalAction(Map<String, dynamic> action) {
+    final type = action['type'] as String?;
+
+    switch (type) {
+      case 'navigate':
+        final screen = action['screen'] as String?;
+        if (screen == 'new_chat') {
+          Navigator.of(context).pop();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Navigate to: $screen')),
+          );
+        }
+        break;
+      default:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Action: ${action.toString()}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+    }
+  }
+
+  /// Handle actions from the generated UI
+  void _handleAction(Map<String, dynamic> action) {
+    final type = action['type'] as String?;
+
+    // Handle special navigation actions locally
+    if (type == 'navigate') {
+      final screen = action['screen'] as String?;
+      if (screen == 'new_chat' || screen == 'start_chat') {
+        Navigator.of(context).pop();
+        return;
+      }
+    }
+
+    // Send all other actions to the LLM
+    _sendInteraction(action);
   }
 
   /// Create a fallback screen when LLM is not available
@@ -190,150 +295,100 @@ class _GenerativeUIDemoPageState extends State<GenerativeUIDemoPage> {
     );
   }
 
-  /// Handle actions from the generated UI
-  void _handleAction(Map<String, dynamic> action) {
-    final type = action['type'] as String?;
+  /// Send a custom message from the input field
+  void _submitMessage() {
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
 
-    switch (type) {
-      case 'navigate':
-        final screen = action['screen'] as String?;
-        _handleNavigation(screen);
-        break;
-      case 'refresh':
-        _generateDashboard();
-        break;
-      case 'open_settings':
-        Navigator.of(context).pushNamed('/settings');
-        break;
-      case 'start_chat':
-        Navigator.of(context).pop(); // Return to main screen to start chat
-        break;
-      default:
-        // Show a snackbar for unhandled actions
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Action: ${action.toString()}'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-    }
+    _messageController.clear();
+    _sendMessage(text);
   }
 
-  /// Handle navigation actions
-  void _handleNavigation(String? screen) {
-    switch (screen) {
-      case 'new_chat':
-      case 'start_chat':
-        Navigator.of(context).pop(); // Return to main chat screen
-        break;
-      case 'history':
-        // Request a history-focused screen from the LLM
-        _requestScreen(
-          'Show a screen focused on conversation history. '
-          'Display recent conversations with timestamps and brief summaries. '
-          'Include options to search and filter.',
-        );
-        break;
-      case 'assistants':
-        // Request an assistants management screen
-        _requestScreen(
-          'Show a screen for managing AI assistants. '
-          'Display available assistants with their descriptions and capabilities. '
-          'Include options to create or configure assistants.',
-        );
-        break;
-      case 'dashboard':
-        _generateDashboard();
-        break;
-      default:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Navigation to: $screen'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-    }
-  }
-
-  /// Request a specific screen from the LLM
-  Future<void> _requestScreen(String instruction) async {
-    final settings = context.read<SettingsProvider>();
-    final providerKey = settings.currentModelProvider;
-    final modelId = settings.currentModelId;
-
-    if (providerKey == null || modelId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No AI model configured. Using static UI.'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-      return;
-    }
-
+  /// Reset the conversation
+  void _resetSession() {
+    _session?.clearHistory();
     setState(() {
-      _isLoading = true;
+      _currentScreen = null;
       _error = null;
+      _streamingContent = null;
     });
-
-    try {
-      final config = settings.getProviderConfig(providerKey);
-      final service = GenerativeUIService(
-        config: config,
-        modelId: modelId,
-      );
-
-      final userContext = _buildUserContext();
-      final appContext = _buildAppContext();
-
-      await for (final progress in service.generateScreenStream(
-        instruction: instruction,
-        userContext: userContext,
-        appContext: appContext,
-        previousScreen: _currentScreen,
-      )) {
-        switch (progress) {
-          case _GenerativeUIComplete(:final screen):
-            setState(() {
-              _currentScreen = screen;
-              _isLoading = false;
-            });
-          case _GenerativeUIError(:final message):
-            setState(() {
-              _error = message;
-              _isLoading = false;
-            });
-          case _GenerativeUILoading():
-          case _GenerativeUIStreaming():
-            // Continue waiting for completion
-            continue;
-        }
-      }
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
-    }
+    _initSession();
   }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Generative UI Demo'),
+        title: const Text('Generative UI'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _isLoading ? null : _generateDashboard,
-            tooltip: 'Regenerate',
+            onPressed: _isLoading ? null : _resetSession,
+            tooltip: 'Reset Conversation',
           ),
         ],
       ),
-      body: _buildBody(),
+      body: Column(
+        children: [
+          // Main content area
+          Expanded(
+            child: _buildBody(),
+          ),
+
+          // Message input at bottom (Cline-like)
+          if (_session != null) _buildMessageInput(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageInput() {
+    final cs = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        border: Border(
+          top: BorderSide(color: cs.outlineVariant.withOpacity(0.5)),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _messageController,
+                decoration: InputDecoration(
+                  hintText: 'Ask for UI changes...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: cs.surfaceContainerHighest,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  isDense: true,
+                ),
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => _submitMessage(),
+                enabled: !_isLoading,
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton.filled(
+              onPressed: _isLoading ? null : _submitMessage,
+              icon: const Icon(Icons.send),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -388,7 +443,7 @@ class _GenerativeUIDemoPageState extends State<GenerativeUIDemoPage> {
       );
     }
 
-    // Show error with fallback screen
+    // Show error banner with current screen
     if (_error != null) {
       return Column(
         children: [
@@ -405,7 +460,7 @@ class _GenerativeUIDemoPageState extends State<GenerativeUIDemoPage> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Using fallback UI. LLM error: $_error',
+                    _error!,
                     style: TextStyle(
                       color: cs.onErrorContainer,
                       fontSize: 12,
@@ -447,7 +502,7 @@ class _GenerativeUIDemoPageState extends State<GenerativeUIDemoPage> {
         children: [
           CircularProgressIndicator(),
           SizedBox(height: 16),
-          Text('Preparing generative UI...'),
+          Text('Starting generative UI session...'),
         ],
       ),
     );

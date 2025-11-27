@@ -359,6 +359,90 @@ class _BlockRenderer extends StatelessWidget {
           screenMotion: screenMotion,
           onAction: onAction,
         );
+      case CheckboxBlock():
+        child = _CheckboxBlockWidget(
+          block: block,
+          screenMotion: screenMotion,
+          onAction: onAction,
+        );
+      case SwitchBlock():
+        child = _SwitchBlockWidget(
+          block: block,
+          screenMotion: screenMotion,
+          onAction: onAction,
+        );
+      case ChipBlock():
+        child = _ChipBlockWidget(
+          block: block,
+          screenMotion: screenMotion,
+          onAction: onAction,
+        );
+      case ProgressBlock():
+        child = _ProgressBlockWidget(
+          block: block,
+          screenMotion: screenMotion,
+        );
+      case DividerBlock():
+        child = _DividerBlockWidget(
+          block: block,
+          screenMotion: screenMotion,
+        );
+      case IconButtonBlock():
+        child = _IconButtonBlockWidget(
+          block: block,
+          screenMotion: screenMotion,
+          onAction: onAction,
+        );
+      case FabBlock():
+        child = _FabBlockWidget(
+          block: block,
+          screenMotion: screenMotion,
+          onAction: onAction,
+        );
+      case TextFieldBlock():
+        child = _TextFieldBlockWidget(
+          block: block,
+          screenMotion: screenMotion,
+          onAction: onAction,
+        );
+      case SliderBlock():
+        child = _SliderBlockWidget(
+          block: block,
+          screenMotion: screenMotion,
+          onAction: onAction,
+        );
+      case BadgeBlock():
+        child = _BadgeBlockWidget(
+          block: block,
+          screenMotion: screenMotion,
+          onAction: onAction,
+        );
+      case ImageBlock():
+        child = _ImageBlockWidget(
+          block: block,
+          screenMotion: screenMotion,
+        );
+      case AvatarBlock():
+        child = _AvatarBlockWidget(
+          block: block,
+          screenMotion: screenMotion,
+        );
+      case RowBlock():
+        child = _RowBlockWidget(
+          block: block,
+          screenMotion: screenMotion,
+          onAction: onAction,
+        );
+      case ColumnBlock():
+        child = _ColumnBlockWidget(
+          block: block,
+          screenMotion: screenMotion,
+          onAction: onAction,
+        );
+      case SpacerBlock():
+        child = _SpacerBlockWidget(
+          block: block,
+        );
     }
 
     // Apply entrance animation
@@ -934,5 +1018,959 @@ class _IconWidget extends StatelessWidget {
     };
 
     return iconMap[normalized] ?? Icons.circle;
+  }
+}
+
+// ===========================================================================
+// Checkbox Block Widget
+// ===========================================================================
+
+class _CheckboxBlockWidget extends StatefulWidget {
+  final CheckboxBlock block;
+  final MotionScheme? screenMotion;
+  final void Function(Map<String, dynamic> action)? onAction;
+
+  const _CheckboxBlockWidget({
+    required this.block,
+    this.screenMotion,
+    this.onAction,
+  });
+
+  @override
+  State<_CheckboxBlockWidget> createState() => _CheckboxBlockWidgetState();
+}
+
+class _CheckboxBlockWidgetState extends State<_CheckboxBlockWidget> {
+  late bool _checked;
+
+  @override
+  void initState() {
+    super.initState();
+    _checked = widget.block.checked;
+  }
+
+  @override
+  void didUpdateWidget(_CheckboxBlockWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.block.checked != widget.block.checked) {
+      _checked = widget.block.checked;
+    }
+  }
+
+  void _handleChange(bool? value) {
+    if (widget.block.disabled == true) return;
+    setState(() {
+      _checked = value ?? false;
+    });
+    if (widget.onAction != null) {
+      final action = widget.block.action ?? {};
+      widget.onAction!({
+        'type': 'checkbox_change',
+        'checked': _checked,
+        ...action,
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.block.label != null) {
+      return CheckboxListTile(
+        value: _checked,
+        onChanged: widget.block.disabled == true ? null : _handleChange,
+        title: Text(widget.block.label!),
+        controlAffinity: ListTileControlAffinity.leading,
+        dense: true,
+      );
+    }
+    return Checkbox(
+      value: _checked,
+      onChanged: widget.block.disabled == true ? null : _handleChange,
+    );
+  }
+}
+
+// ===========================================================================
+// Switch Block Widget
+// ===========================================================================
+
+class _SwitchBlockWidget extends StatefulWidget {
+  final SwitchBlock block;
+  final MotionScheme? screenMotion;
+  final void Function(Map<String, dynamic> action)? onAction;
+
+  const _SwitchBlockWidget({
+    required this.block,
+    this.screenMotion,
+    this.onAction,
+  });
+
+  @override
+  State<_SwitchBlockWidget> createState() => _SwitchBlockWidgetState();
+}
+
+class _SwitchBlockWidgetState extends State<_SwitchBlockWidget> {
+  late bool _selected;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = widget.block.selected;
+  }
+
+  @override
+  void didUpdateWidget(_SwitchBlockWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.block.selected != widget.block.selected) {
+      _selected = widget.block.selected;
+    }
+  }
+
+  void _handleChange(bool value) {
+    if (widget.block.disabled == true) return;
+    setState(() {
+      _selected = value;
+    });
+    if (widget.onAction != null) {
+      final action = widget.block.action ?? {};
+      widget.onAction!({
+        'type': 'switch_change',
+        'selected': _selected,
+        ...action,
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.block.label != null) {
+      return SwitchListTile(
+        value: _selected,
+        onChanged: widget.block.disabled == true ? null : _handleChange,
+        title: Text(widget.block.label!),
+        dense: true,
+      );
+    }
+    return Switch(
+      value: _selected,
+      onChanged: widget.block.disabled == true ? null : _handleChange,
+    );
+  }
+}
+
+// ===========================================================================
+// Chip Block Widget
+// ===========================================================================
+
+class _ChipBlockWidget extends StatefulWidget {
+  final ChipBlock block;
+  final MotionScheme? screenMotion;
+  final void Function(Map<String, dynamic> action)? onAction;
+
+  const _ChipBlockWidget({
+    required this.block,
+    this.screenMotion,
+    this.onAction,
+  });
+
+  @override
+  State<_ChipBlockWidget> createState() => _ChipBlockWidgetState();
+}
+
+class _ChipBlockWidgetState extends State<_ChipBlockWidget> {
+  late bool _selected;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = widget.block.selected ?? false;
+  }
+
+  @override
+  void didUpdateWidget(_ChipBlockWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.block.selected != widget.block.selected) {
+      _selected = widget.block.selected ?? false;
+    }
+  }
+
+  void _handleSelect(bool selected) {
+    if (widget.block.disabled == true) return;
+    setState(() {
+      _selected = selected;
+    });
+    if (widget.onAction != null) {
+      final action = widget.block.action ?? {};
+      widget.onAction!({
+        'type': 'chip_select',
+        'selected': _selected,
+        'label': widget.block.label,
+        ...action,
+      });
+    }
+  }
+
+  void _handlePressed() {
+    if (widget.block.disabled == true) return;
+    if (widget.onAction != null) {
+      final action = widget.block.action ?? {};
+      widget.onAction!({
+        'type': 'chip_pressed',
+        'label': widget.block.label,
+        ...action,
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget? avatar;
+    if (widget.block.icon != null) {
+      avatar = Icon(_mapIconName(widget.block.icon!), size: 18);
+    }
+
+    switch (widget.block.variant) {
+      case ChipVariant.filter:
+        return FilterChip(
+          label: Text(widget.block.label),
+          selected: _selected,
+          onSelected: widget.block.disabled == true ? null : _handleSelect,
+          avatar: avatar,
+        );
+      case ChipVariant.input:
+        return InputChip(
+          label: Text(widget.block.label),
+          selected: _selected,
+          onSelected: widget.block.disabled == true ? null : _handleSelect,
+          avatar: avatar,
+          onPressed: widget.block.disabled == true ? null : _handlePressed,
+        );
+      case ChipVariant.suggestion:
+        return ActionChip(
+          label: Text(widget.block.label),
+          onPressed: widget.block.disabled == true ? null : _handlePressed,
+          avatar: avatar,
+        );
+      case ChipVariant.assist:
+      case null:
+        return ActionChip(
+          label: Text(widget.block.label),
+          onPressed: widget.block.disabled == true ? null : _handlePressed,
+          avatar: avatar,
+        );
+    }
+  }
+
+  IconData _mapIconName(String name) {
+    return _IconWidget(iconName: name, color: Colors.black)._mapIconName(name);
+  }
+}
+
+// ===========================================================================
+// Progress Block Widget
+// ===========================================================================
+
+class _ProgressBlockWidget extends StatelessWidget {
+  final ProgressBlock block;
+  final MotionScheme? screenMotion;
+
+  const _ProgressBlockWidget({
+    required this.block,
+    this.screenMotion,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    Widget progress;
+    switch (block.variant) {
+      case ProgressVariant.circular:
+        progress = block.value != null
+            ? CircularProgressIndicator(value: block.value)
+            : const CircularProgressIndicator();
+        break;
+      case ProgressVariant.linear:
+      case null:
+        progress = block.value != null
+            ? LinearProgressIndicator(value: block.value)
+            : const LinearProgressIndicator();
+    }
+
+    if (block.label != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(block.label!, style: Theme.of(context).textTheme.labelMedium),
+          const SizedBox(height: 8),
+          progress,
+        ],
+      );
+    }
+
+    return progress;
+  }
+}
+
+// ===========================================================================
+// Divider Block Widget
+// ===========================================================================
+
+class _DividerBlockWidget extends StatelessWidget {
+  final DividerBlock block;
+  final MotionScheme? screenMotion;
+
+  const _DividerBlockWidget({
+    required this.block,
+    this.screenMotion,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (block.label != null) {
+      return Row(
+        children: [
+          const Expanded(child: Divider()),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              block.label!,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+          ),
+          const Expanded(child: Divider()),
+        ],
+      );
+    }
+    return Divider(
+      indent: block.inset == true ? 16 : 0,
+      endIndent: block.inset == true ? 16 : 0,
+    );
+  }
+}
+
+// ===========================================================================
+// Icon Button Block Widget
+// ===========================================================================
+
+class _IconButtonBlockWidget extends StatelessWidget {
+  final IconButtonBlock block;
+  final MotionScheme? screenMotion;
+  final void Function(Map<String, dynamic> action)? onAction;
+
+  const _IconButtonBlockWidget({
+    required this.block,
+    this.screenMotion,
+    this.onAction,
+  });
+
+  void _handlePressed() {
+    if (block.disabled == true) return;
+    if (onAction != null) {
+      final action = block.action ?? {};
+      onAction!({
+        'type': 'icon_button_pressed',
+        'icon': block.icon,
+        ...action,
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = _IconWidget(iconName: block.icon, color: Colors.black)._mapIconName(block.icon);
+
+    Widget button;
+    if (block.filled == true) {
+      button = IconButton.filled(
+        icon: Icon(icon),
+        onPressed: block.disabled == true ? null : _handlePressed,
+        tooltip: block.tooltip,
+      );
+    } else {
+      button = IconButton(
+        icon: Icon(icon),
+        onPressed: block.disabled == true ? null : _handlePressed,
+        tooltip: block.tooltip,
+      );
+    }
+
+    return button;
+  }
+}
+
+// ===========================================================================
+// FAB Block Widget
+// ===========================================================================
+
+class _FabBlockWidget extends StatelessWidget {
+  final FabBlock block;
+  final MotionScheme? screenMotion;
+  final void Function(Map<String, dynamic> action)? onAction;
+
+  const _FabBlockWidget({
+    required this.block,
+    this.screenMotion,
+    this.onAction,
+  });
+
+  void _handlePressed() {
+    if (onAction != null) {
+      final action = block.action ?? {};
+      onAction!({
+        'type': 'fab_pressed',
+        ...action,
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = block.icon != null
+        ? Icon(_IconWidget(iconName: block.icon!, color: Colors.black)._mapIconName(block.icon!))
+        : null;
+
+    switch (block.size) {
+      case FabSize.small:
+        return FloatingActionButton.small(
+          onPressed: _handlePressed,
+          child: icon,
+        );
+      case FabSize.large:
+        return FloatingActionButton.large(
+          onPressed: _handlePressed,
+          child: icon,
+        );
+      case FabSize.extended:
+        return FloatingActionButton.extended(
+          onPressed: _handlePressed,
+          icon: icon,
+          label: Text(block.label ?? ''),
+        );
+      case FabSize.regular:
+      case null:
+        return FloatingActionButton(
+          onPressed: _handlePressed,
+          child: icon,
+        );
+    }
+  }
+}
+
+// ===========================================================================
+// TextField Block Widget
+// ===========================================================================
+
+class _TextFieldBlockWidget extends StatefulWidget {
+  final TextFieldBlock block;
+  final MotionScheme? screenMotion;
+  final void Function(Map<String, dynamic> action)? onAction;
+
+  const _TextFieldBlockWidget({
+    required this.block,
+    this.screenMotion,
+    this.onAction,
+  });
+
+  @override
+  State<_TextFieldBlockWidget> createState() => _TextFieldBlockWidgetState();
+}
+
+class _TextFieldBlockWidgetState extends State<_TextFieldBlockWidget> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.block.value);
+  }
+
+  @override
+  void didUpdateWidget(_TextFieldBlockWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.block.value != widget.block.value) {
+      _controller.text = widget.block.value ?? '';
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleSubmit(String value) {
+    if (widget.onAction != null) {
+      widget.onAction!({
+        'type': 'text_field_submit',
+        'value': value,
+        if (widget.block.fieldId != null) 'fieldId': widget.block.fieldId,
+      });
+    }
+  }
+
+  void _handleChange(String value) {
+    if (widget.onAction != null) {
+      widget.onAction!({
+        'type': 'text_field_change',
+        'value': value,
+        if (widget.block.fieldId != null) 'fieldId': widget.block.fieldId,
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final leadingIcon = widget.block.leadingIcon != null
+        ? Icon(_IconWidget(iconName: widget.block.leadingIcon!, color: Colors.black)
+            ._mapIconName(widget.block.leadingIcon!))
+        : null;
+    final trailingIcon = widget.block.trailingIcon != null
+        ? Icon(_IconWidget(iconName: widget.block.trailingIcon!, color: Colors.black)
+            ._mapIconName(widget.block.trailingIcon!))
+        : null;
+
+    final decoration = InputDecoration(
+      labelText: widget.block.label,
+      hintText: widget.block.placeholder,
+      prefixIcon: leadingIcon,
+      suffixIcon: trailingIcon,
+      errorText: widget.block.errorText,
+      helperText: widget.block.helperText,
+      border: widget.block.variant == TextFieldVariant.outlined
+          ? const OutlineInputBorder()
+          : null,
+      filled: widget.block.variant == TextFieldVariant.filled,
+    );
+
+    return TextField(
+      controller: _controller,
+      decoration: decoration,
+      enabled: widget.block.disabled != true,
+      readOnly: widget.block.readOnly == true,
+      onSubmitted: _handleSubmit,
+      onChanged: _handleChange,
+    );
+  }
+}
+
+// ===========================================================================
+// Slider Block Widget
+// ===========================================================================
+
+class _SliderBlockWidget extends StatefulWidget {
+  final SliderBlock block;
+  final MotionScheme? screenMotion;
+  final void Function(Map<String, dynamic> action)? onAction;
+
+  const _SliderBlockWidget({
+    required this.block,
+    this.screenMotion,
+    this.onAction,
+  });
+
+  @override
+  State<_SliderBlockWidget> createState() => _SliderBlockWidgetState();
+}
+
+class _SliderBlockWidgetState extends State<_SliderBlockWidget> {
+  late double _value;
+
+  @override
+  void initState() {
+    super.initState();
+    _value = widget.block.value;
+  }
+
+  @override
+  void didUpdateWidget(_SliderBlockWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.block.value != widget.block.value) {
+      _value = widget.block.value;
+    }
+  }
+
+  void _handleChange(double value) {
+    if (widget.block.disabled == true) return;
+    setState(() {
+      _value = value;
+    });
+  }
+
+  void _handleChangeEnd(double value) {
+    if (widget.onAction != null) {
+      widget.onAction!({
+        'type': 'slider_change',
+        'value': value,
+        if (widget.block.fieldId != null) 'fieldId': widget.block.fieldId,
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final slider = Slider(
+      value: _value,
+      min: widget.block.min ?? 0,
+      max: widget.block.max ?? 1,
+      divisions: widget.block.divisions,
+      label: widget.block.label ?? _value.toStringAsFixed(2),
+      onChanged: widget.block.disabled == true ? null : _handleChange,
+      onChangeEnd: widget.block.disabled == true ? null : _handleChangeEnd,
+    );
+
+    if (widget.block.label != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(widget.block.label!, style: Theme.of(context).textTheme.labelMedium),
+          slider,
+        ],
+      );
+    }
+
+    return slider;
+  }
+}
+
+// ===========================================================================
+// Badge Block Widget
+// ===========================================================================
+
+class _BadgeBlockWidget extends StatelessWidget {
+  final BadgeBlock block;
+  final MotionScheme? screenMotion;
+  final void Function(Map<String, dynamic> action)? onAction;
+
+  const _BadgeBlockWidget({
+    required this.block,
+    this.screenMotion,
+    this.onAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Widget child = block.child != null
+        ? _BlockRenderer(
+            block: block.child!,
+            screenMotion: screenMotion,
+            onAction: onAction,
+          )
+        : const SizedBox.shrink();
+
+    return Badge(
+      label: block.label != null && block.label!.isNotEmpty
+          ? Text(block.label!)
+          : null,
+      child: child,
+    );
+  }
+}
+
+// ===========================================================================
+// Image Block Widget
+// ===========================================================================
+
+class _ImageBlockWidget extends StatelessWidget {
+  final ImageBlock block;
+  final MotionScheme? screenMotion;
+
+  const _ImageBlockWidget({
+    required this.block,
+    this.screenMotion,
+  });
+
+  BoxFit _parseFit(String? fit) {
+    switch (fit?.toLowerCase()) {
+      case 'contain':
+        return BoxFit.contain;
+      case 'cover':
+        return BoxFit.cover;
+      case 'fill':
+        return BoxFit.fill;
+      case 'fitwidth':
+      case 'fit_width':
+        return BoxFit.fitWidth;
+      case 'fitheight':
+      case 'fit_height':
+        return BoxFit.fitHeight;
+      case 'none':
+        return BoxFit.none;
+      case 'scaledown':
+      case 'scale_down':
+        return BoxFit.scaleDown;
+      default:
+        return BoxFit.contain;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = _radiusForEmphasis(block.emphasis);
+    final fit = _parseFit(block.fit);
+
+    Widget image;
+    if (block.src.startsWith('http://') || block.src.startsWith('https://')) {
+      image = Image.network(
+        block.src,
+        width: block.width,
+        height: block.height,
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: block.width,
+            height: block.height ?? 100,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            child: const Icon(Icons.broken_image),
+          );
+        },
+      );
+    } else {
+      // Assume it's an asset path
+      image = Image.asset(
+        block.src,
+        width: block.width,
+        height: block.height,
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: block.width,
+            height: block.height ?? 100,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            child: const Icon(Icons.broken_image),
+          );
+        },
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(radius),
+      child: image,
+    );
+  }
+}
+
+// ===========================================================================
+// Avatar Block Widget
+// ===========================================================================
+
+class _AvatarBlockWidget extends StatelessWidget {
+  final AvatarBlock block;
+  final MotionScheme? screenMotion;
+
+  const _AvatarBlockWidget({
+    required this.block,
+    this.screenMotion,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final size = block.size ?? 40;
+    final cs = Theme.of(context).colorScheme;
+    final bgColor = _backgroundForSurface(context, block.surface ?? Surface.primary);
+    final fgColor = _foregroundForSurface(context, block.surface ?? Surface.primary);
+
+    Widget? child;
+    ImageProvider? backgroundImage;
+
+    if (block.imageUrl != null) {
+      backgroundImage = NetworkImage(block.imageUrl!);
+    } else if (block.initials != null) {
+      child = Text(
+        block.initials!,
+        style: TextStyle(
+          color: fgColor,
+          fontSize: size * 0.4,
+          fontWeight: FontWeight.w500,
+        ),
+      );
+    } else if (block.icon != null) {
+      final icon = _IconWidget(iconName: block.icon!, color: Colors.black)._mapIconName(block.icon!);
+      child = Icon(icon, size: size * 0.5, color: fgColor);
+    } else {
+      child = Icon(Icons.person, size: size * 0.5, color: fgColor);
+    }
+
+    return CircleAvatar(
+      radius: size / 2,
+      backgroundColor: bgColor,
+      backgroundImage: backgroundImage,
+      child: backgroundImage == null ? child : null,
+    );
+  }
+}
+
+// ===========================================================================
+// Row Block Widget
+// ===========================================================================
+
+class _RowBlockWidget extends StatelessWidget {
+  final RowBlock block;
+  final MotionScheme? screenMotion;
+  final void Function(Map<String, dynamic> action)? onAction;
+
+  const _RowBlockWidget({
+    required this.block,
+    this.screenMotion,
+    this.onAction,
+  });
+
+  MainAxisAlignment _parseMainAxisAlignment(String? value) {
+    switch (value?.toLowerCase()) {
+      case 'start':
+        return MainAxisAlignment.start;
+      case 'end':
+        return MainAxisAlignment.end;
+      case 'center':
+        return MainAxisAlignment.center;
+      case 'spacebetween':
+      case 'space_between':
+        return MainAxisAlignment.spaceBetween;
+      case 'spacearound':
+      case 'space_around':
+        return MainAxisAlignment.spaceAround;
+      case 'spaceevenly':
+      case 'space_evenly':
+        return MainAxisAlignment.spaceEvenly;
+      default:
+        return MainAxisAlignment.start;
+    }
+  }
+
+  CrossAxisAlignment _parseCrossAxisAlignment(String? value) {
+    switch (value?.toLowerCase()) {
+      case 'start':
+        return CrossAxisAlignment.start;
+      case 'end':
+        return CrossAxisAlignment.end;
+      case 'center':
+        return CrossAxisAlignment.center;
+      case 'stretch':
+        return CrossAxisAlignment.stretch;
+      case 'baseline':
+        return CrossAxisAlignment.baseline;
+      default:
+        return CrossAxisAlignment.center;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = block.spacing ?? 8;
+
+    return Row(
+      mainAxisAlignment: _parseMainAxisAlignment(block.mainAxisAlignment),
+      crossAxisAlignment: _parseCrossAxisAlignment(block.crossAxisAlignment),
+      children: [
+        for (int i = 0; i < block.children.length; i++) ...[
+          _BlockRenderer(
+            block: block.children[i],
+            screenMotion: screenMotion,
+            onAction: onAction,
+          ),
+          if (i < block.children.length - 1) SizedBox(width: spacing),
+        ],
+      ],
+    );
+  }
+}
+
+// ===========================================================================
+// Column Block Widget
+// ===========================================================================
+
+class _ColumnBlockWidget extends StatelessWidget {
+  final ColumnBlock block;
+  final MotionScheme? screenMotion;
+  final void Function(Map<String, dynamic> action)? onAction;
+
+  const _ColumnBlockWidget({
+    required this.block,
+    this.screenMotion,
+    this.onAction,
+  });
+
+  MainAxisAlignment _parseMainAxisAlignment(String? value) {
+    switch (value?.toLowerCase()) {
+      case 'start':
+        return MainAxisAlignment.start;
+      case 'end':
+        return MainAxisAlignment.end;
+      case 'center':
+        return MainAxisAlignment.center;
+      case 'spacebetween':
+      case 'space_between':
+        return MainAxisAlignment.spaceBetween;
+      case 'spacearound':
+      case 'space_around':
+        return MainAxisAlignment.spaceAround;
+      case 'spaceevenly':
+      case 'space_evenly':
+        return MainAxisAlignment.spaceEvenly;
+      default:
+        return MainAxisAlignment.start;
+    }
+  }
+
+  CrossAxisAlignment _parseCrossAxisAlignment(String? value) {
+    switch (value?.toLowerCase()) {
+      case 'start':
+        return CrossAxisAlignment.start;
+      case 'end':
+        return CrossAxisAlignment.end;
+      case 'center':
+        return CrossAxisAlignment.center;
+      case 'stretch':
+        return CrossAxisAlignment.stretch;
+      case 'baseline':
+        return CrossAxisAlignment.baseline;
+      default:
+        return CrossAxisAlignment.start;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = block.spacing ?? 8;
+
+    return Column(
+      mainAxisAlignment: _parseMainAxisAlignment(block.mainAxisAlignment),
+      crossAxisAlignment: _parseCrossAxisAlignment(block.crossAxisAlignment),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (int i = 0; i < block.children.length; i++) ...[
+          _BlockRenderer(
+            block: block.children[i],
+            screenMotion: screenMotion,
+            onAction: onAction,
+          ),
+          if (i < block.children.length - 1) SizedBox(height: spacing),
+        ],
+      ],
+    );
+  }
+}
+
+// ===========================================================================
+// Spacer Block Widget
+// ===========================================================================
+
+class _SpacerBlockWidget extends StatelessWidget {
+  final SpacerBlock block;
+
+  const _SpacerBlockWidget({
+    required this.block,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (block.size != null) {
+      return SizedBox(height: block.size, width: block.size);
+    }
+    return const Spacer();
   }
 }
