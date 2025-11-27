@@ -800,6 +800,211 @@ class _ButtonBlockWidget extends StatelessWidget {
 }
 
 // ===========================================================================
+// Icon Mapping Utility
+// ===========================================================================
+
+/// Maps icon names to Material Icons
+/// This is a static utility function used by multiple widget classes
+IconData mapIconName(String name) {
+  final normalized = name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+
+  // Common icon mappings
+  const iconMap = <String, IconData>{
+    'home': Icons.home,
+    'dashboard': Icons.dashboard,
+    'settings': Icons.settings,
+    'user': Icons.person,
+    'person': Icons.person,
+    'chat': Icons.chat,
+    'message': Icons.message,
+    'star': Icons.star,
+    'favorite': Icons.favorite,
+    'heart': Icons.favorite,
+    'check': Icons.check,
+    'close': Icons.close,
+    'add': Icons.add,
+    'remove': Icons.remove,
+    'edit': Icons.edit,
+    'delete': Icons.delete,
+    'search': Icons.search,
+    'menu': Icons.menu,
+    'info': Icons.info,
+    'warning': Icons.warning,
+    'error': Icons.error,
+    'help': Icons.help,
+    'notification': Icons.notifications,
+    'bell': Icons.notifications,
+    'calendar': Icons.calendar_today,
+    'clock': Icons.access_time,
+    'time': Icons.access_time,
+    'location': Icons.location_on,
+    'map': Icons.map,
+    'phone': Icons.phone,
+    'email': Icons.email,
+    'mail': Icons.mail,
+    'camera': Icons.camera_alt,
+    'image': Icons.image,
+    'photo': Icons.photo,
+    'video': Icons.videocam,
+    'music': Icons.music_note,
+    'audio': Icons.audiotrack,
+    'file': Icons.insert_drive_file,
+    'folder': Icons.folder,
+    'download': Icons.download,
+    'upload': Icons.upload,
+    'share': Icons.share,
+    'link': Icons.link,
+    'wifi': Icons.wifi,
+    'bluetooth': Icons.bluetooth,
+    'battery': Icons.battery_full,
+    'power': Icons.power_settings_new,
+    'refresh': Icons.refresh,
+    'sync': Icons.sync,
+    'cloud': Icons.cloud,
+    'sun': Icons.wb_sunny,
+    'moon': Icons.nightlight,
+    'sparkles': Icons.auto_awesome,
+    'magic': Icons.auto_awesome,
+    'ai': Icons.smart_toy,
+    'robot': Icons.smart_toy,
+    'brain': Icons.psychology,
+    'lightbulb': Icons.lightbulb,
+    'idea': Icons.lightbulb,
+    'trending': Icons.trending_up,
+    'analytics': Icons.analytics,
+    'chart': Icons.bar_chart,
+    'graph': Icons.show_chart,
+    'wallet': Icons.account_balance_wallet,
+    'money': Icons.attach_money,
+    'payment': Icons.payment,
+    'creditcard': Icons.credit_card,
+    'shopping': Icons.shopping_cart,
+    'cart': Icons.shopping_cart,
+    'bag': Icons.shopping_bag,
+    'gift': Icons.card_giftcard,
+    'ticket': Icons.confirmation_number,
+    'tag': Icons.local_offer,
+    'lock': Icons.lock,
+    'unlock': Icons.lock_open,
+    'key': Icons.vpn_key,
+    'security': Icons.security,
+    'shield': Icons.shield,
+    'verified': Icons.verified,
+    'thumbsup': Icons.thumb_up,
+    'thumbsdown': Icons.thumb_down,
+    'like': Icons.thumb_up,
+    'dislike': Icons.thumb_down,
+    'comment': Icons.comment,
+    'send': Icons.send,
+    'forward': Icons.arrow_forward,
+    'back': Icons.arrow_back,
+    'up': Icons.arrow_upward,
+    'down': Icons.arrow_downward,
+    'expand': Icons.expand_more,
+    'collapse': Icons.expand_less,
+    'fullscreen': Icons.fullscreen,
+    'minimize': Icons.minimize,
+    'maximize': Icons.crop_square,
+    'copy': Icons.content_copy,
+    'paste': Icons.content_paste,
+    'cut': Icons.content_cut,
+    'undo': Icons.undo,
+    'redo': Icons.redo,
+    'save': Icons.save,
+    'print': Icons.print,
+    'export': Icons.ios_share,
+    'import': Icons.download,
+    'filter': Icons.filter_list,
+    'sort': Icons.sort,
+    'list': Icons.list,
+    'grid': Icons.grid_view,
+    'table': Icons.table_chart,
+    'code': Icons.code,
+    'terminal': Icons.terminal,
+    'bug': Icons.bug_report,
+    'api': Icons.api,
+    'database': Icons.storage,
+    'server': Icons.dns,
+    'globe': Icons.language,
+    'world': Icons.public,
+    'flag': Icons.flag,
+    'bookmark': Icons.bookmark,
+    'archive': Icons.archive,
+    'trash': Icons.delete,
+    'recycle': Icons.delete_forever,
+    'restore': Icons.restore,
+    'history': Icons.history,
+    'recent': Icons.history,
+    'new': Icons.fiber_new,
+    'hot': Icons.whatshot,
+    'fire': Icons.local_fire_department,
+    'water': Icons.water_drop,
+    'leaf': Icons.eco,
+    'tree': Icons.park,
+    'mountain': Icons.terrain,
+    'beach': Icons.beach_access,
+    'travel': Icons.flight,
+    'plane': Icons.flight,
+    'car': Icons.directions_car,
+    'bus': Icons.directions_bus,
+    'train': Icons.train,
+    'bike': Icons.directions_bike,
+    'walk': Icons.directions_walk,
+    'run': Icons.directions_run,
+    'sports': Icons.sports,
+    'game': Icons.sports_esports,
+    'controller': Icons.sports_esports,
+    'trophy': Icons.emoji_events,
+    'medal': Icons.military_tech,
+    'crown': Icons.emoji_events,
+    'smile': Icons.sentiment_satisfied,
+    'happy': Icons.sentiment_satisfied,
+    'sad': Icons.sentiment_dissatisfied,
+    'angry': Icons.sentiment_very_dissatisfied,
+    'neutral': Icons.sentiment_neutral,
+    'celebration': Icons.celebration,
+    'party': Icons.celebration,
+    'cake': Icons.cake,
+    'coffee': Icons.coffee,
+    'restaurant': Icons.restaurant,
+    'food': Icons.fastfood,
+    'drink': Icons.local_bar,
+    'wine': Icons.wine_bar,
+    'beer': Icons.sports_bar,
+    'health': Icons.health_and_safety,
+    'medical': Icons.medical_services,
+    'hospital': Icons.local_hospital,
+    'pill': Icons.medication,
+    'fitness': Icons.fitness_center,
+    'gym': Icons.fitness_center,
+    'weight': Icons.monitor_weight,
+    'sleep': Icons.bedtime,
+    'bed': Icons.bed,
+    'house': Icons.house,
+    'building': Icons.apartment,
+    'office': Icons.business,
+    'school': Icons.school,
+    'university': Icons.account_balance,
+    'bank': Icons.account_balance,
+    'store': Icons.store,
+    'shop': Icons.storefront,
+    'factory': Icons.factory,
+    'construction': Icons.construction,
+    'tools': Icons.build,
+    'wrench': Icons.build,
+    'hammer': Icons.hardware,
+    'brush': Icons.brush,
+    'paint': Icons.format_paint,
+    'palette': Icons.palette,
+    'art': Icons.palette,
+    'design': Icons.design_services,
+    'creative': Icons.auto_fix_high,
+  };
+
+  return iconMap[normalized] ?? Icons.circle;
+}
+
+// ===========================================================================
 // Icon Widget Helper
 // ===========================================================================
 
@@ -816,208 +1021,8 @@ class _IconWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Map common icon names to Material Icons
-    final IconData icon = _mapIconName(iconName);
+    final IconData icon = mapIconName(iconName);
     return Icon(icon, color: color, size: size);
-  }
-
-  IconData _mapIconName(String name) {
-    final normalized = name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
-
-    // Common icon mappings
-    const iconMap = <String, IconData>{
-      'home': Icons.home,
-      'dashboard': Icons.dashboard,
-      'settings': Icons.settings,
-      'user': Icons.person,
-      'person': Icons.person,
-      'chat': Icons.chat,
-      'message': Icons.message,
-      'star': Icons.star,
-      'favorite': Icons.favorite,
-      'heart': Icons.favorite,
-      'check': Icons.check,
-      'close': Icons.close,
-      'add': Icons.add,
-      'remove': Icons.remove,
-      'edit': Icons.edit,
-      'delete': Icons.delete,
-      'search': Icons.search,
-      'menu': Icons.menu,
-      'info': Icons.info,
-      'warning': Icons.warning,
-      'error': Icons.error,
-      'help': Icons.help,
-      'notification': Icons.notifications,
-      'bell': Icons.notifications,
-      'calendar': Icons.calendar_today,
-      'clock': Icons.access_time,
-      'time': Icons.access_time,
-      'location': Icons.location_on,
-      'map': Icons.map,
-      'phone': Icons.phone,
-      'email': Icons.email,
-      'mail': Icons.mail,
-      'camera': Icons.camera_alt,
-      'image': Icons.image,
-      'photo': Icons.photo,
-      'video': Icons.videocam,
-      'music': Icons.music_note,
-      'audio': Icons.audiotrack,
-      'file': Icons.insert_drive_file,
-      'folder': Icons.folder,
-      'download': Icons.download,
-      'upload': Icons.upload,
-      'share': Icons.share,
-      'link': Icons.link,
-      'wifi': Icons.wifi,
-      'bluetooth': Icons.bluetooth,
-      'battery': Icons.battery_full,
-      'power': Icons.power_settings_new,
-      'refresh': Icons.refresh,
-      'sync': Icons.sync,
-      'cloud': Icons.cloud,
-      'sun': Icons.wb_sunny,
-      'moon': Icons.nightlight,
-      'sparkles': Icons.auto_awesome,
-      'magic': Icons.auto_awesome,
-      'ai': Icons.smart_toy,
-      'robot': Icons.smart_toy,
-      'brain': Icons.psychology,
-      'lightbulb': Icons.lightbulb,
-      'idea': Icons.lightbulb,
-      'trending': Icons.trending_up,
-      'analytics': Icons.analytics,
-      'chart': Icons.bar_chart,
-      'graph': Icons.show_chart,
-      'wallet': Icons.account_balance_wallet,
-      'money': Icons.attach_money,
-      'payment': Icons.payment,
-      'creditcard': Icons.credit_card,
-      'shopping': Icons.shopping_cart,
-      'cart': Icons.shopping_cart,
-      'bag': Icons.shopping_bag,
-      'gift': Icons.card_giftcard,
-      'ticket': Icons.confirmation_number,
-      'tag': Icons.local_offer,
-      'lock': Icons.lock,
-      'unlock': Icons.lock_open,
-      'key': Icons.vpn_key,
-      'security': Icons.security,
-      'shield': Icons.shield,
-      'verified': Icons.verified,
-      'thumbsup': Icons.thumb_up,
-      'thumbsdown': Icons.thumb_down,
-      'like': Icons.thumb_up,
-      'dislike': Icons.thumb_down,
-      'comment': Icons.comment,
-      'send': Icons.send,
-      'forward': Icons.arrow_forward,
-      'back': Icons.arrow_back,
-      'up': Icons.arrow_upward,
-      'down': Icons.arrow_downward,
-      'expand': Icons.expand_more,
-      'collapse': Icons.expand_less,
-      'fullscreen': Icons.fullscreen,
-      'minimize': Icons.minimize,
-      'maximize': Icons.crop_square,
-      'copy': Icons.content_copy,
-      'paste': Icons.content_paste,
-      'cut': Icons.content_cut,
-      'undo': Icons.undo,
-      'redo': Icons.redo,
-      'save': Icons.save,
-      'print': Icons.print,
-      'export': Icons.ios_share,
-      'import': Icons.download,
-      'filter': Icons.filter_list,
-      'sort': Icons.sort,
-      'list': Icons.list,
-      'grid': Icons.grid_view,
-      'table': Icons.table_chart,
-      'code': Icons.code,
-      'terminal': Icons.terminal,
-      'bug': Icons.bug_report,
-      'api': Icons.api,
-      'database': Icons.storage,
-      'server': Icons.dns,
-      'globe': Icons.language,
-      'world': Icons.public,
-      'flag': Icons.flag,
-      'bookmark': Icons.bookmark,
-      'archive': Icons.archive,
-      'trash': Icons.delete,
-      'recycle': Icons.delete_forever,
-      'restore': Icons.restore,
-      'history': Icons.history,
-      'recent': Icons.history,
-      'new': Icons.fiber_new,
-      'hot': Icons.whatshot,
-      'fire': Icons.local_fire_department,
-      'water': Icons.water_drop,
-      'leaf': Icons.eco,
-      'tree': Icons.park,
-      'mountain': Icons.terrain,
-      'beach': Icons.beach_access,
-      'travel': Icons.flight,
-      'plane': Icons.flight,
-      'car': Icons.directions_car,
-      'bus': Icons.directions_bus,
-      'train': Icons.train,
-      'bike': Icons.directions_bike,
-      'walk': Icons.directions_walk,
-      'run': Icons.directions_run,
-      'sports': Icons.sports,
-      'game': Icons.sports_esports,
-      'controller': Icons.sports_esports,
-      'trophy': Icons.emoji_events,
-      'medal': Icons.military_tech,
-      'crown': Icons.emoji_events,
-      'smile': Icons.sentiment_satisfied,
-      'happy': Icons.sentiment_satisfied,
-      'sad': Icons.sentiment_dissatisfied,
-      'angry': Icons.sentiment_very_dissatisfied,
-      'neutral': Icons.sentiment_neutral,
-      'celebration': Icons.celebration,
-      'party': Icons.celebration,
-      'cake': Icons.cake,
-      'coffee': Icons.coffee,
-      'restaurant': Icons.restaurant,
-      'food': Icons.fastfood,
-      'drink': Icons.local_bar,
-      'wine': Icons.wine_bar,
-      'beer': Icons.sports_bar,
-      'health': Icons.health_and_safety,
-      'medical': Icons.medical_services,
-      'hospital': Icons.local_hospital,
-      'pill': Icons.medication,
-      'fitness': Icons.fitness_center,
-      'gym': Icons.fitness_center,
-      'weight': Icons.monitor_weight,
-      'sleep': Icons.bedtime,
-      'bed': Icons.bed,
-      'house': Icons.house,
-      'building': Icons.apartment,
-      'office': Icons.business,
-      'school': Icons.school,
-      'university': Icons.account_balance,
-      'bank': Icons.account_balance,
-      'store': Icons.store,
-      'shop': Icons.storefront,
-      'factory': Icons.factory,
-      'construction': Icons.construction,
-      'tools': Icons.build,
-      'wrench': Icons.build,
-      'hammer': Icons.hardware,
-      'brush': Icons.brush,
-      'paint': Icons.format_paint,
-      'palette': Icons.palette,
-      'art': Icons.palette,
-      'design': Icons.design_services,
-      'creative': Icons.auto_fix_high,
-    };
-
-    return iconMap[normalized] ?? Icons.circle;
   }
 }
 
@@ -1226,7 +1231,7 @@ class _ChipBlockWidgetState extends State<_ChipBlockWidget> {
   Widget build(BuildContext context) {
     Widget? avatar;
     if (widget.block.icon != null) {
-      avatar = Icon(_mapIconName(widget.block.icon!), size: 18);
+      avatar = Icon(mapIconName(widget.block.icon!), size: 18);
     }
 
     switch (widget.block.variant) {
@@ -1259,10 +1264,6 @@ class _ChipBlockWidgetState extends State<_ChipBlockWidget> {
           avatar: avatar,
         );
     }
-  }
-
-  IconData _mapIconName(String name) {
-    return _IconWidget(iconName: name, color: Colors.black)._mapIconName(name);
   }
 }
 
@@ -1381,7 +1382,7 @@ class _IconButtonBlockWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final icon = _IconWidget(iconName: block.icon, color: Colors.black)._mapIconName(block.icon);
+    final icon = mapIconName(block.icon);
 
     Widget button;
     if (block.filled == true) {
@@ -1430,7 +1431,7 @@ class _FabBlockWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final icon = block.icon != null
-        ? Icon(_IconWidget(iconName: block.icon!, color: Colors.black)._mapIconName(block.icon!))
+        ? Icon(mapIconName(block.icon!))
         : null;
 
     switch (block.size) {
@@ -1525,12 +1526,10 @@ class _TextFieldBlockWidgetState extends State<_TextFieldBlockWidget> {
   @override
   Widget build(BuildContext context) {
     final leadingIcon = widget.block.leadingIcon != null
-        ? Icon(_IconWidget(iconName: widget.block.leadingIcon!, color: Colors.black)
-            ._mapIconName(widget.block.leadingIcon!))
+        ? Icon(mapIconName(widget.block.leadingIcon!))
         : null;
     final trailingIcon = widget.block.trailingIcon != null
-        ? Icon(_IconWidget(iconName: widget.block.trailingIcon!, color: Colors.black)
-            ._mapIconName(widget.block.trailingIcon!))
+        ? Icon(mapIconName(widget.block.trailingIcon!))
         : null;
 
     final decoration = InputDecoration(
@@ -1789,7 +1788,7 @@ class _AvatarBlockWidget extends StatelessWidget {
         ),
       );
     } else if (block.icon != null) {
-      final icon = _IconWidget(iconName: block.icon!, color: Colors.black)._mapIconName(block.icon!);
+      final icon = mapIconName(block.icon!);
       child = Icon(icon, size: size * 0.5, color: fgColor);
     } else {
       child = Icon(Icons.person, size: size * 0.5, color: fgColor);
