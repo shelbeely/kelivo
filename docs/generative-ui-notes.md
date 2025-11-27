@@ -16,6 +16,58 @@ The Generative UI feature allows the Kelivo app to render interactive UI screens
 - All LLM output goes through schema validation before rendering
 - User interactions are captured and sent back to the LLM for context
 
+## Integration with Chat Interface
+
+**NEW**: The generative UI is now integrated directly into the regular chat interface! When an LLM response contains valid generative UI JSON (with `screenId` and `blocks`), it will be rendered inline within the message.
+
+### How it Works
+
+1. The `ChatMessageWidget` detects generative UI JSON in assistant messages
+2. The `InlineGenerativeUI` widget renders the UI blocks inline
+3. User interactions trigger the `onGenerativeUIAction` callback
+4. The callback can send interactions back to the LLM for dynamic updates
+
+### Usage in Chat
+
+```dart
+ChatMessageWidget(
+  message: chatMessage,
+  // ... other props
+  onGenerativeUIAction: (action) {
+    // Handle the user interaction
+    // This could send a follow-up message to the LLM
+    print('User action: $action');
+  },
+)
+```
+
+### LLM Response Format
+
+When using generative UI in chat, the LLM can include JSON in its response:
+
+```
+Here's an interactive dashboard for you:
+
+{
+  "screenId": "dashboard",
+  "blocks": [
+    {"type": "hero", "headline": "Welcome!", "icon": "sparkles"},
+    {"type": "card", "headline": "Quick Actions", "body": [
+      {"type": "text", "text": "Choose an option:"}
+    ], "actions": [
+      {"type": "button", "label": "Start Chat", "role": "primary_action", "action": {"type": "start_chat"}}
+    ]}
+  ]
+}
+
+You can click the button above to start a new conversation!
+```
+
+The widget will:
+1. Render the text before the JSON
+2. Render the interactive UI blocks
+3. Render the text after the JSON
+
 ## Architecture
 
 ```
@@ -347,5 +399,7 @@ The feature can be enabled/disabled via `SettingsProvider.generativeUIEnabled`.
 | `lib/generative_ui/schema.dart` | Schema type definitions |
 | `lib/generative_ui/renderer.dart` | M3 Expressive renderer |
 | `lib/generative_ui/llm_service.dart` | LLM integration |
+| `lib/generative_ui/inline_generative_ui.dart` | Inline chat integration |
 | `lib/features/generative_ui/pages/generative_ui_demo_page.dart` | Demo screen |
+| `lib/features/chat/widgets/chat_message_widget.dart` | Updated with generative UI support |
 | `docs/generative-ui-notes.md` | This documentation |
