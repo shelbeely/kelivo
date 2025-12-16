@@ -4,6 +4,8 @@
 
 Kelivo now integrates **A2UI (Agent-to-User Interface)** protocol support, enabling AI agents to generate dynamic, safe, and updateable user interfaces beyond simple text responses.
 
+**Implementation Note**: Kelivo uses a custom, self-contained A2UI implementation built from scratch. This implementation follows the A2UI specification and is fully compatible with the A2UI protocol, while being optimized for Kelivo's architecture.
+
 ## What is A2UI?
 
 A2UI is Google's open-source specification that allows generative AI agents to produce declarative JSON descriptions of UI components. Instead of just returning text, agents can create forms, cards, buttons, selectors, charts, and more - all rendered safely using Flutter widgets.
