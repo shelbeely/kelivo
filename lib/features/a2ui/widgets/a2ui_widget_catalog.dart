@@ -216,6 +216,11 @@ class A2uiWidgetCatalog {
     final max = (spec['max'] as num?)?.toDouble() ?? 1.0;
     final id = spec['id'] as String?;
 
+    // Log when value is clamped for debugging
+    if (value < min || value > max) {
+      debugPrint('A2UI Slider: value $value clamped to range [$min, $max] for $id');
+    }
+
     return Slider(
       value: value.clamp(min, max),
       min: min,
@@ -268,11 +273,16 @@ class A2uiWidgetCatalog {
   static Color? _parseColor(dynamic value) {
     if (value == null) return null;
     if (value is String) {
-      // Parse hex color strings like "#FF0000" or "0xFFFF0000"
+      // Parse hex color strings like "#FF0000" (RGB) or "#AARRGGBB" (ARGB)
       try {
         String colorStr = value.replaceAll('#', '');
+        // Only add alpha prefix if the string is RGB format (6 chars)
+        // ARGB format (8 chars) already includes alpha
         if (colorStr.length == 6) {
-          colorStr = 'FF$colorStr';
+          colorStr = 'FF$colorStr'; // Add full opacity
+        } else if (colorStr.length != 8) {
+          // Invalid length, return null
+          return null;
         }
         return Color(int.parse(colorStr, radix: 16));
       } catch (_) {
