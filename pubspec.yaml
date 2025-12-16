@@ -95,6 +95,11 @@ dependencies:
   flutter_background: ^1.3.0+1
   flutter_local_notifications: ^17.2.3
 
+  # A2UI - Agent-to-User Interface protocol support
+  # Note: Using custom implementation. External packages available:
+  # genui_a2ui: ^0.1.0
+  # a2ui: ^0.1.0
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
