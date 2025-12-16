@@ -47,6 +47,7 @@ Thanks to [siliconflow.cn](https://siliconflow.cn) for providing free models in 
 - 🎙️ **Voice/TTS Providers** - Built-in system TTS plus OpenAI / Google Gemini / ElevenLabs voice servers.
 - 🛠️ **MCP Support** - Model Context Protocol tool integration.
 - 🧰 **Built-in MCP Tools** - Includes a built-in MCP Fetch tool.
+- 🎯 **A2UI Integration** - Agent-to-User Interface protocol support for dynamic, agent-generated UIs.
 - 🔍 **Web Search** - Integrated with multiple search engines (Exa, Tavily, Zhipu, LinkUp, Brave, Bing, Metaso, SearXNG, Ollama, Jina, Perplexity, Bocha).
 - 🧩 **Prompt Variables** - Supports dynamic variables like model name, time, etc.
 - 📤 **QR Code Sharing** - Export and import provider configurations via QR codes.

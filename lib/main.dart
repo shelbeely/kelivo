@@ -28,6 +28,7 @@ import 'core/providers/instruction_injection_provider.dart';
 import 'core/providers/memory_provider.dart';
 import 'core/providers/backup_provider.dart';
 import 'core/providers/hotkey_provider.dart';
+import 'features/a2ui/providers/a2ui_provider.dart';
 import 'core/services/chat/chat_service.dart';
 import 'core/services/mcp/mcp_tool_service.dart';
 import 'utils/sandbox_path_resolver.dart';
@@ -107,6 +108,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => MemoryProvider()),
         // Desktop hotkeys provider
         ChangeNotifierProvider(create: (_) => HotkeyProvider()),
+        // A2UI provider for agent-to-user interface rendering
+        ChangeNotifierProvider(create: (_) => A2uiProvider()),
         ChangeNotifierProvider(
           create: (ctx) => BackupProvider(
             chatService: ctx.read<ChatService>(),
