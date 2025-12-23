@@ -1,5 +1,8 @@
 import '../core/providers/model_provider.dart';
 
+/// ModelGrouping utility provides logic to group models by type and brand.
+/// Embedding models are grouped separately from chat models to help users
+/// distinguish between conversational AI and text vectorization models.
 class ModelGrouping {
   static String groupFor(
     ModelInfo m, {
@@ -7,6 +10,9 @@ class ModelGrouping {
     required String otherLabel,
   }) {
     final id = m.id.toLowerCase();
+    // Embedding models get their own group
+    // This includes models explicitly marked as embedding type,
+    // or models with 'embed' or 'embedding' in their name
     if (m.type == ModelType.embedding || id.contains('embedding') || id.contains('embed')) {
       return embeddingsLabel;
     }

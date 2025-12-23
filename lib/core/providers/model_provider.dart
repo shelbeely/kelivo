@@ -7,10 +7,16 @@ import '../services/api_key_manager.dart';
 import 'package:Kelivo/secrets/fallback.dart';
 import '../services/api/google_service_account_auth.dart';
 
+/// ModelType distinguishes between conversational AI models and embedding models.
+/// - chat: Models that generate conversational responses (GPT, Gemini, Claude, etc.)
+/// - embedding: Models that convert text to numerical vectors for semantic search, clustering, etc.
 enum ModelType { chat, embedding }
 enum Modality { text, image }
 enum ModelAbility { tool, reasoning }
 
+/// ModelInfo contains metadata about an AI model.
+/// The 'type' field determines whether the model is for chat or embeddings,
+/// which affects UI presentation and available configuration options.
 class ModelInfo {
   final String id;
   final String displayName;
@@ -21,7 +27,7 @@ class ModelInfo {
   ModelInfo({
     required this.id,
     required this.displayName,
-    this.type = ModelType.chat,
+    this.type = ModelType.chat, // Defaults to chat model
     this.input = const [Modality.text],
     this.output = const [Modality.text],
     this.abilities = const [],
@@ -237,6 +243,9 @@ class GoogleProvider extends BaseProvider {
             final displayName = (e['displayName'] as String?) ?? id;
             final methods = (e['supportedGenerationMethods'] as List?)?.map((m) => m.toString()).toSet() ?? {};
             if (!(methods.contains('generateContent') || methods.contains('embedContent'))) continue;
+            // Auto-detect model type from Google API capabilities:
+            // - generateContent = chat model (conversational AI)
+            // - embedContent only = embedding model (text vectorization)
             out.add(ModelRegistry.infer(ModelInfo(
               id: id,
               displayName: displayName,
