@@ -47,6 +47,7 @@
 - 🎙️ **语音服务** - 内置系统 TTS，同时支持 OpenAI / Google Gemini / ElevenLabs 语音服务器
 - 🛠️ **MCP 支持** - Model Context Protocol 工具集成
 - 🧰 **内置 MCP 工具** - 内置 fetch MCP 工具
+- 🤖 **Agent Skills 支持** - 为 AI 编程助手（Cursor、Claude、Copilot 等）提供内置技能
 - 🔍 **网络搜索** - 集成多种搜索引擎（Exa、Tavily、知谱、LinkUp、Brave、Bing、Metaso、SearXNG、Ollama、Jina, Perplexity, Bocha）
 - 🧩 **提示词变量** - 支持模型名称、时间等动态变量
 - 📤 **二维码分享** - 通过二维码导出和导入供应商配置
@@ -63,6 +64,16 @@
 - ✅ Windows
 - ✅ macOS
 - ✅ Linux
+
+## 🤖 Agent Skills 支持
+
+Kelivo 支持 [Agent Skills](https://agentskills.io) - 一个用于扩展 AI 编程助手项目特定知识的开放标准。内置技能帮助 AI 助手（Cursor、Claude、Copilot 等）理解 Kelivo 的架构并编写更好的代码。
+
+**可用技能**：
+- 📘 **kelivo-development** - Kelivo 开发完整指南（架构、模式、工作流程）
+- 🎯 **flutter-best-practices** - Flutter 优化和最佳实践
+
+**了解更多**：详细文档请参阅 [AGENT_SKILLS.md](AGENT_SKILLS.md)。
 
 ## 🤝 贡献指南
 
