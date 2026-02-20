@@ -1,0 +1,57 @@
+name: Build Debug APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-debug-apk:
+    name: Build Debug APK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: 🐦 Install Flutter (Master)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: master
+          cache: true
+
+      - name: 📝 Inject fallback
+        shell: bash
+        run: |
+          mkdir -p lib/secrets
+          cat > lib/secrets/fallback.dart <<'EOF'
+          const String siliconflowFallbackKey = '${{ secrets.SILICONFLOW_KEY }}';
+          EOF
+
+      - name: 📝 Get version
+        run: |
+          VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "VERSION=${VERSION}_${SHORT_SHA}" >> $GITHUB_ENV
+          echo "Version: ${VERSION}_${SHORT_SHA}"
+
+      - name: 🏗️ Build Debug APK
+        run: flutter build apk --debug
+
+      - name: 📦 Rename APK
+        run: |
+          cd build/app/outputs/flutter-apk
+          mv app-debug.apk "Kelivo_debug_${VERSION}.apk"
+
+      - name: 📤 Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kelivo-Debug-APK
+          path: build/app/outputs/flutter-apk/Kelivo_debug_*.apk
