@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:http/http.dart' as http;
+import 'package:meta/meta.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/model_provider.dart';
 import '../../models/token_usage.dart';
@@ -901,7 +902,101 @@ class ChatApiService {
       }
       if (out != null) out.add(Map<String, dynamic>.from(m));
     }
-    return out ?? messages;
+    return _sanitizeToolMessages(out ?? messages);
+  }
+
+  /// Validate and fix tool message chains so that providers like OpenRouter /
+  /// Gemini never receive malformed payloads.
+  ///
+  /// Rules enforced:
+  /// 1. Every message with `role == "tool"` MUST have a non-empty `tool_call_id`
+  ///    or `name`.  If both are missing the message is converted to a plain
+  ///    `assistant` message (preserving content) or dropped when content is empty.
+  /// 2. A `role == "tool"` message must appear immediately after (possibly among
+  ///    a batch of siblings) an `assistant` message whose `tool_calls` list
+  ///    contains a matching `id`.  Orphaned tool messages (no preceding assistant
+  ///    tool_calls, or `tool_call_id` not found) are converted / dropped.
+  @visibleForTesting
+  static List<Map<String, dynamic>> sanitizeToolMessages(List<Map<String, dynamic>> messages) =>
+      _sanitizeToolMessages(messages);
+
+  static List<Map<String, dynamic>> _sanitizeToolMessages(List<Map<String, dynamic>> messages) {
+    // Quick scan: anything to fix?
+    bool hasTool = false;
+    for (final m in messages) {
+      if ((m['role'] ?? '').toString() == 'tool') { hasTool = true; break; }
+    }
+    if (!hasTool) return messages;
+
+    final result = <Map<String, dynamic>>[];
+    // Collect valid tool_call ids from the most recent assistant message with tool_calls.
+    Set<String> pendingToolCallIds = <String>{};
+
+    for (int i = 0; i < messages.length; i++) {
+      final m = messages[i];
+      final role = (m['role'] ?? '').toString();
+
+      if (role != 'tool') {
+        // Track assistant tool_calls so we know which tool_call_ids are expected.
+        if (role == 'assistant') {
+          final tcs = m['tool_calls'];
+          if (tcs is List && tcs.isNotEmpty) {
+            pendingToolCallIds = <String>{};
+            for (final tc in tcs) {
+              if (tc is Map) {
+                final id = (tc['id'] ?? '').toString();
+                if (id.isNotEmpty) pendingToolCallIds.add(id);
+              }
+            }
+          } else {
+            // Non-tool-calling assistant message resets the pending set.
+            pendingToolCallIds = <String>{};
+          }
+        } else {
+          // Any non-assistant, non-tool role resets pending ids.
+          pendingToolCallIds = <String>{};
+        }
+        result.add(m);
+        continue;
+      }
+
+      // --- role == 'tool' ---
+      final toolCallId = (m['tool_call_id'] ?? '').toString();
+      final name = (m['name'] ?? '').toString();
+      final content = (m['content'] ?? '').toString();
+
+      // Rule 1: must have tool_call_id or name.
+      if (toolCallId.isEmpty && name.isEmpty) {
+        // Convert to assistant if there is useful content, otherwise drop.
+        if (content.trim().isNotEmpty) {
+          result.add(<String, dynamic>{'role': 'assistant', 'content': '[tool output]\n$content'});
+        }
+        continue;
+      }
+
+      // Rule 2: must be linked to a preceding assistant tool_calls entry.
+      if (pendingToolCallIds.isEmpty) {
+        // No preceding assistant with tool_calls – orphaned tool message.
+        if (content.trim().isNotEmpty) {
+          result.add(<String, dynamic>{'role': 'assistant', 'content': '[tool output]\n$content'});
+        }
+        continue;
+      }
+
+      if (toolCallId.isNotEmpty && !pendingToolCallIds.contains(toolCallId)) {
+        // tool_call_id doesn't match any known call – convert / drop.
+        if (content.trim().isNotEmpty) {
+          result.add(<String, dynamic>{'role': 'assistant', 'content': '[tool output]\n$content'});
+        }
+        continue;
+      }
+
+      // Valid tool message – keep it and remove the matched id.
+      if (toolCallId.isNotEmpty) pendingToolCallIds.remove(toolCallId);
+      result.add(m);
+    }
+
+    return result;
   }
 
   // Build a follow-up transcript for OpenAI-style Chat Completions tool-calls.
