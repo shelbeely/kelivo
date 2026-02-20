@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:http/http.dart' as http;
+import 'package:meta/meta.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/model_provider.dart';
 import '../../models/token_usage.dart';
@@ -901,7 +902,100 @@ class ChatApiService {
       }
       if (out != null) out.add(Map<String, dynamic>.from(m));
     }
-    return out ?? messages;
+    return _sanitizeToolMessages(out ?? messages);
+  }
+
+  /// Validate and fix tool message chains so that providers like OpenRouter /
+  /// Gemini never receive malformed payloads.
+  ///
+  /// Rules enforced:
+  /// 1. Every message with `role == "tool"` MUST have a non-empty `tool_call_id`
+  ///    or `name`.  If both are missing the message is converted to a plain
+  ///    `assistant` message (preserving content) or dropped when content is empty.
+  /// 2. A `role == "tool"` message must appear immediately after (possibly among
+  ///    a batch of siblings) an `assistant` message whose `tool_calls` list
+  ///    contains a matching `id`.  Orphaned tool messages (no preceding assistant
+  ///    tool_calls, or `tool_call_id` not found) are converted / dropped.
+  @visibleForTesting
+  static List<Map<String, dynamic>> sanitizeToolMessages(List<Map<String, dynamic>> messages) =>
+      _sanitizeToolMessages(messages);
+
+  static List<Map<String, dynamic>> _sanitizeToolMessages(List<Map<String, dynamic>> messages) {
+    // Quick scan: anything to fix?
+    bool hasTool = false;
+    for (final m in messages) {
+      if ((m['role'] ?? '').toString() == 'tool') { hasTool = true; break; }
+    }
+    if (!hasTool) return messages;
+
+    final result = <Map<String, dynamic>>[];
+    // Collect valid tool_call ids from the most recent assistant message with tool_calls.
+    Set<String> expectedToolCallIds = <String>{};
+
+    for (int i = 0; i < messages.length; i++) {
+      final m = messages[i];
+      final role = (m['role'] ?? '').toString();
+
+      if (role != 'tool') {
+        // Track assistant tool_calls so we know which tool_call_ids are expected.
+        if (role == 'assistant') {
+          final tcs = m['tool_calls'];
+          if (tcs is List && tcs.isNotEmpty) {
+            expectedToolCallIds = <String>{};
+            for (final tc in tcs) {
+              if (tc is Map) {
+                final id = (tc['id'] ?? '').toString();
+                if (id.isNotEmpty) expectedToolCallIds.add(id);
+              }
+            }
+          } else {
+            // Non-tool-calling assistant message resets the expected set.
+            expectedToolCallIds = <String>{};
+          }
+        } else {
+          // Any non-assistant, non-tool role resets expected ids.
+          expectedToolCallIds = <String>{};
+        }
+        result.add(m);
+        continue;
+      }
+
+      // --- role == 'tool' ---
+      final toolCallId = (m['tool_call_id'] ?? '').toString();
+      final name = (m['name'] ?? '').toString();
+      final content = (m['content'] ?? '').toString();
+
+      // Rule 1: must have tool_call_id or name.
+      if (toolCallId.isEmpty && name.isEmpty) {
+        _addConvertedToolOutput(result, content);
+        continue;
+      }
+
+      // Rule 2: must be linked to a preceding assistant tool_calls entry.
+      if (expectedToolCallIds.isEmpty) {
+        _addConvertedToolOutput(result, content);
+        continue;
+      }
+
+      if (toolCallId.isNotEmpty && !expectedToolCallIds.contains(toolCallId)) {
+        _addConvertedToolOutput(result, content);
+        continue;
+      }
+
+      // Valid tool message – keep it and remove the matched id.
+      if (toolCallId.isNotEmpty) expectedToolCallIds.remove(toolCallId);
+      result.add(m);
+    }
+
+    return result;
+  }
+
+  /// Convert an invalid tool message to an assistant message preserving content,
+  /// or drop it if content is empty.
+  static void _addConvertedToolOutput(List<Map<String, dynamic>> result, String content) {
+    if (content.trim().isNotEmpty) {
+      result.add(<String, dynamic>{'role': 'assistant', 'content': '[tool output]\n$content'});
+    }
   }
 
   // Build a follow-up transcript for OpenAI-style Chat Completions tool-calls.
