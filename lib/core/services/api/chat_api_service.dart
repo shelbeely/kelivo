@@ -930,7 +930,7 @@ class ChatApiService {
 
     final result = <Map<String, dynamic>>[];
     // Collect valid tool_call ids from the most recent assistant message with tool_calls.
-    Set<String> pendingToolCallIds = <String>{};
+    Set<String> expectedToolCallIds = <String>{};
 
     for (int i = 0; i < messages.length; i++) {
       final m = messages[i];
@@ -941,20 +941,20 @@ class ChatApiService {
         if (role == 'assistant') {
           final tcs = m['tool_calls'];
           if (tcs is List && tcs.isNotEmpty) {
-            pendingToolCallIds = <String>{};
+            expectedToolCallIds = <String>{};
             for (final tc in tcs) {
               if (tc is Map) {
                 final id = (tc['id'] ?? '').toString();
-                if (id.isNotEmpty) pendingToolCallIds.add(id);
+                if (id.isNotEmpty) expectedToolCallIds.add(id);
               }
             }
           } else {
-            // Non-tool-calling assistant message resets the pending set.
-            pendingToolCallIds = <String>{};
+            // Non-tool-calling assistant message resets the expected set.
+            expectedToolCallIds = <String>{};
           }
         } else {
-          // Any non-assistant, non-tool role resets pending ids.
-          pendingToolCallIds = <String>{};
+          // Any non-assistant, non-tool role resets expected ids.
+          expectedToolCallIds = <String>{};
         }
         result.add(m);
         continue;
@@ -967,36 +967,35 @@ class ChatApiService {
 
       // Rule 1: must have tool_call_id or name.
       if (toolCallId.isEmpty && name.isEmpty) {
-        // Convert to assistant if there is useful content, otherwise drop.
-        if (content.trim().isNotEmpty) {
-          result.add(<String, dynamic>{'role': 'assistant', 'content': '[tool output]\n$content'});
-        }
+        _addConvertedToolOutput(result, content);
         continue;
       }
 
       // Rule 2: must be linked to a preceding assistant tool_calls entry.
-      if (pendingToolCallIds.isEmpty) {
-        // No preceding assistant with tool_calls – orphaned tool message.
-        if (content.trim().isNotEmpty) {
-          result.add(<String, dynamic>{'role': 'assistant', 'content': '[tool output]\n$content'});
-        }
+      if (expectedToolCallIds.isEmpty) {
+        _addConvertedToolOutput(result, content);
         continue;
       }
 
-      if (toolCallId.isNotEmpty && !pendingToolCallIds.contains(toolCallId)) {
-        // tool_call_id doesn't match any known call – convert / drop.
-        if (content.trim().isNotEmpty) {
-          result.add(<String, dynamic>{'role': 'assistant', 'content': '[tool output]\n$content'});
-        }
+      if (toolCallId.isNotEmpty && !expectedToolCallIds.contains(toolCallId)) {
+        _addConvertedToolOutput(result, content);
         continue;
       }
 
       // Valid tool message – keep it and remove the matched id.
-      if (toolCallId.isNotEmpty) pendingToolCallIds.remove(toolCallId);
+      if (toolCallId.isNotEmpty) expectedToolCallIds.remove(toolCallId);
       result.add(m);
     }
 
     return result;
+  }
+
+  /// Convert an invalid tool message to an assistant message preserving content,
+  /// or drop it if content is empty.
+  static void _addConvertedToolOutput(List<Map<String, dynamic>> result, String content) {
+    if (content.trim().isNotEmpty) {
+      result.add(<String, dynamic>{'role': 'assistant', 'content': '[tool output]\n$content'});
+    }
   }
 
   // Build a follow-up transcript for OpenAI-style Chat Completions tool-calls.
