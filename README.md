@@ -47,6 +47,7 @@ Thanks to [siliconflow.cn](https://siliconflow.cn) for providing free models in 
 - 🎙️ **Voice/TTS Providers** - Built-in system TTS plus OpenAI / Google Gemini / ElevenLabs voice servers.
 - 🛠️ **MCP Support** - Model Context Protocol tool integration.
 - 🧰 **Built-in MCP Tools** - Includes a built-in MCP Fetch tool.
+- 🤖 **Agent Skills Support** - Built-in skills for AI coding assistants (Cursor, Claude, Copilot, etc.).
 - 🔍 **Web Search** - Integrated with multiple search engines (Exa, Tavily, Zhipu, LinkUp, Brave, Bing, Metaso, SearXNG, Ollama, Jina, Perplexity, Bocha).
 - 🧩 **Prompt Variables** - Supports dynamic variables like model name, time, etc.
 - 📤 **QR Code Sharing** - Export and import provider configurations via QR codes.
@@ -63,6 +64,16 @@ Thanks to [siliconflow.cn](https://siliconflow.cn) for providing free models in 
 - ✅ Windows
 - ✅ macOS
 - ✅ Linux
+
+## 🤖 Agent Skills Support
+
+Kelivo supports [Agent Skills](https://agentskills.io) - an open standard for extending AI coding assistants with project-specific knowledge. Built-in skills help AI assistants (Cursor, Claude, Copilot, etc.) understand Kelivo's architecture and write better code.
+
+**Available Skills**:
+- 📘 **kelivo-development** - Complete guide for Kelivo development (architecture, patterns, workflows)
+- 🎯 **flutter-best-practices** - Flutter optimization and best practices
+
+**Learn More**: See [AGENT_SKILLS.md](AGENT_SKILLS.md) for detailed documentation.
 
 ## 🤝 Contribution Guide
 
