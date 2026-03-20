@@ -70,7 +70,7 @@ void main() {
       );
 
       expect(messages.first['role'], 'system');
-      expect(messages.first['content'], contains('Android agent mode'));
+      expect(messages.first['content'], contains('Kelivo agent mode'));
       expect(messages.last['role'], 'user');
       expect(messages.last['content'], contains('continuation round 1 of 1'));
     });

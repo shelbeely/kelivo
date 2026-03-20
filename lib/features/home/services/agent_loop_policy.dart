@@ -63,7 +63,7 @@ class AgentLoopPolicy {
     required int maxRounds,
   }) {
     return '''
-You are operating in Android agent mode.
+You are operating in Kelivo agent mode.
 
 Primary goal: $goal
 
