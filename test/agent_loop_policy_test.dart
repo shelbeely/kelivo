@@ -15,7 +15,7 @@ void main() {
         AgentLoopPolicy.shouldContinue(
           agentModeEnabled: true,
           currentRound: 0,
-          maxRounds: 1,
+          maxRounds: 2,
           hadToolInteraction: true,
         ),
         isTrue,
@@ -25,7 +25,7 @@ void main() {
         AgentLoopPolicy.shouldContinue(
           agentModeEnabled: false,
           currentRound: 0,
-          maxRounds: 1,
+          maxRounds: 2,
           hadToolInteraction: true,
         ),
         isFalse,
@@ -34,8 +34,8 @@ void main() {
       expect(
         AgentLoopPolicy.shouldContinue(
           agentModeEnabled: true,
-          currentRound: 1,
-          maxRounds: 1,
+          currentRound: 2,
+          maxRounds: 2,
           hadToolInteraction: true,
         ),
         isFalse,
@@ -45,7 +45,7 @@ void main() {
         AgentLoopPolicy.shouldContinue(
           agentModeEnabled: true,
           currentRound: 0,
-          maxRounds: 1,
+          maxRounds: 2,
           hadToolInteraction: false,
         ),
         isFalse,
@@ -60,19 +60,31 @@ void main() {
       AgentLoopPolicy.applyAgentSystemPrompt(
         messages,
         goal: 'Find the best route home.',
-        maxRounds: 1,
+        maxRounds: 2,
       );
       AgentLoopPolicy.appendContinuationPrompt(
         messages,
         goal: 'Find the best route home.',
         nextRound: 1,
-        maxRounds: 1,
+        maxRounds: 2,
+        toolsUsed: const <String>['read_file', 'edit_file'],
+        toolResultNotes: const <String>['read_file: inspected main.dart'],
+        lastError: 'flutter analyze failed',
+        previousResponse: 'I updated the app entry point.',
       );
 
       expect(messages.first['role'], 'system');
       expect(messages.first['content'], contains('Kelivo agent mode'));
+      expect(messages.first['content'], contains('Run an execution loop'));
+      expect(messages.first['content'], contains('run checks or verification'));
       expect(messages.last['role'], 'user');
-      expect(messages.last['content'], contains('continuation round 1 of 1'));
+      expect(messages.last['content'], contains('continuation round 1 of 2'));
+      expect(messages.last['content'], contains('read_file, edit_file'));
+      expect(messages.last['content'], contains('flutter analyze failed'));
+      expect(
+        messages.last['content'],
+        contains('I updated the app entry point.'),
+      );
     });
   });
 }

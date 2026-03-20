@@ -732,6 +732,13 @@ class ChatActions {
     ChatStreamChunk chunk,
     stream_ctrl.StreamingState state,
   ) async {
+    for (final call in chunk.toolCalls ?? const <ToolCallInfo>[]) {
+      final name = call.name.trim();
+      if (name.isEmpty) continue;
+      if (!state.toolsUsed.contains(name)) {
+        state.toolsUsed.add(name);
+      }
+    }
     await streamController.handleToolCallsChunk(
       chunk,
       state,
@@ -757,6 +764,17 @@ class ChatActions {
     ChatStreamChunk chunk,
     stream_ctrl.StreamingState state,
   ) async {
+    for (final result in chunk.toolResults ?? const <ToolResultInfo>[]) {
+      final name = result.name.trim().isEmpty ? 'tool' : result.name.trim();
+      final content = result.content.trim();
+      final snippet = content.isEmpty
+          ? '$name completed with no textual output.'
+          : '$name: '
+                '${content.length > 160 ? '${content.substring(0, 160)}…' : content}';
+      if (!state.toolResultNotes.contains(snippet)) {
+        state.toolResultNotes.add(snippet);
+      }
+    }
     await streamController.handleToolResultsChunk(
       chunk,
       state,
@@ -1092,6 +1110,7 @@ class ChatActions {
     final messageId = state.messageId;
     final conversationId = state.conversationId;
     final errorText = e.toString();
+    state.lastError = errorText;
 
     // Reset file processing state on error
     onFileProcessingFinished?.call();
@@ -1187,7 +1206,9 @@ class ChatActions {
     await _conversationStreams.remove(conversationId)?.cancel();
   }
 
-  Future<void> _startAgentContinuation(stream_ctrl.StreamingState state) async {
+  Future<void> _startAgentContinuation(
+    stream_ctrl.StreamingState state,
+  ) async {
     final conversation = chatService.getConversation(state.conversationId);
     if (conversation == null) return;
 
@@ -1207,16 +1228,17 @@ class ChatActions {
     final providerKey = modelConfig.providerKey!;
     final modelId = modelConfig.modelId!;
 
-    final prepared = await messageGenerationService.prepareApiMessagesWithInjections(
-      messages: _messages,
-      versionSelections: _versionSelections,
-      currentConversation: conversation,
-      settings: settings,
-      assistant: assistant,
-      assistantId: assistantId,
-      providerKey: providerKey,
-      modelId: modelId,
-    );
+    final prepared = await messageGenerationService
+        .prepareApiMessagesWithInjections(
+          messages: _messages,
+          versionSelections: _versionSelections,
+          currentConversation: conversation,
+          settings: settings,
+          assistant: assistant,
+          assistantId: assistantId,
+          providerKey: providerKey,
+          modelId: modelId,
+        );
 
     AgentLoopPolicy.applyAgentSystemPrompt(
       prepared.apiMessages,
@@ -1228,6 +1250,10 @@ class ChatActions {
       goal: state.ctx.agentGoal,
       nextRound: state.ctx.agentLoopRound + 1,
       maxRounds: state.ctx.agentLoopMaxRounds,
+      toolsUsed: List<String>.of(state.toolsUsed),
+      toolResultNotes: List<String>.of(state.toolResultNotes),
+      lastError: state.lastError,
+      previousResponse: state.fullContentRaw,
     );
 
     final assistantMessage = await messageGenerationService

@@ -16,6 +16,7 @@ import '../../../core/providers/quick_phrase_provider.dart';
 import '../../../core/providers/instruction_injection_provider.dart';
 import '../../../core/providers/world_book_provider.dart';
 import '../../../core/models/quick_phrase.dart';
+import '../../../core/models/chat_input_data.dart';
 import '../../../core/models/chat_message.dart';
 import '../../../core/services/android_process_text.dart';
 import '../../../utils/sandbox_path_resolver.dart';
@@ -49,6 +50,7 @@ import '../widgets/chat_selection_app_bar.dart';
 import '../widgets/chat_selection_export_bar.dart';
 import '../utils/model_display_helper.dart';
 import '../utils/chat_layout_constants.dart';
+import '../services/agent_loop_policy.dart';
 import '../controllers/home_page_controller.dart';
 import 'home_mobile_layout.dart';
 import 'home_desktop_layout.dart';
@@ -833,7 +835,9 @@ class _HomePageState extends State<HomePage>
             imagePaths: text.imagePaths,
             documents: text.documents,
             agentModeEnabled: _controller.agentModeEnabled,
-            agentLoopMaxRounds: _controller.agentModeEnabled ? 1 : 0,
+            agentLoopMaxRounds: _controller.agentModeEnabled
+                ? AgentLoopPolicy.defaultMaxContinuationRounds
+                : 0,
           ),
         );
         _inputController.clear();

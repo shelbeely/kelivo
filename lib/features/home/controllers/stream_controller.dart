@@ -1032,6 +1032,9 @@ class StreamingState {
   bool titleQueued = false;
   bool hadToolInteraction = false;
   bool continuationScheduled = false;
+  final List<String> toolsUsed = <String>[];
+  final List<String> toolResultNotes = <String>[];
+  String? lastError;
 
   String get messageId => ctx.assistantMessage.id;
   String get conversationId => ctx.assistantMessage.conversationId;
