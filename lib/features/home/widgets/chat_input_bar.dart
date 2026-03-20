@@ -58,6 +58,8 @@ class ChatInputBar extends StatefulWidget {
     this.controller,
     this.mediaController,
     this.loading = false,
+    this.agentModeEnabled = false,
+    this.onToggleAgentMode,
     this.reasoningActive = false,
     this.supportsReasoning = true,
     this.showMcpButton = false,
@@ -100,6 +102,8 @@ class ChatInputBar extends StatefulWidget {
   final TextEditingController? controller;
   final ChatInputBarController? mediaController;
   final bool loading;
+  final bool agentModeEnabled;
+  final VoidCallback? onToggleAgentMode;
   final bool reasoningActive;
   final bool supportsReasoning;
   final bool showMcpButton;
@@ -857,6 +861,25 @@ class _ChatInputBarState extends State<ChatInputBar>
           final svc = SearchService.getService(options);
           return BrandAssets.assetForName(svc.name);
         })();
+
+        if (widget.onToggleAgentMode != null) {
+          actions.add(
+            _OverflowAction(
+              width: normalButtonW,
+              builder: () => _CompactIconButton(
+                tooltip: l10n.settingsPageAssistant,
+                icon: Lucide.Bot,
+                active: widget.agentModeEnabled,
+                onTap: widget.onToggleAgentMode,
+              ),
+              menu: DesktopContextMenuItem(
+                icon: Lucide.Bot,
+                label: l10n.settingsPageAssistant,
+                onTap: widget.onToggleAgentMode,
+              ),
+            ),
+          );
+        }
 
         // Search button (hidden when code_execution is active)
         if (!codeExecutionActive) {

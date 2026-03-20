@@ -209,6 +209,10 @@ class GenerationController {
     required bool enableReasoning,
     required bool streamOutput,
     bool generateTitleOnFinish = true,
+    bool agentModeEnabled = false,
+    int agentLoopRound = 0,
+    int agentLoopMaxRounds = 0,
+    String agentGoal = '',
   }) {
     return stream_ctrl.GenerationContext(
       assistantMessage: assistantMessage,
@@ -227,6 +231,10 @@ class GenerationController {
       enableReasoning: enableReasoning,
       streamOutput: streamOutput,
       generateTitleOnFinish: generateTitleOnFinish,
+      agentModeEnabled: agentModeEnabled,
+      agentLoopRound: agentLoopRound,
+      agentLoopMaxRounds: agentLoopMaxRounds,
+      agentGoal: agentGoal,
     );
   }
 }

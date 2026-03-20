@@ -12,6 +12,7 @@ import '../../../core/services/chat/chat_service.dart';
 import '../../../utils/assistant_regex.dart';
 import '../../../core/models/assistant_regex.dart';
 import '../../../utils/markdown_media_sanitizer.dart';
+import '../services/agent_loop_policy.dart';
 import '../services/message_generation_service.dart';
 import 'chat_controller.dart';
 import 'generation_controller.dart';
@@ -329,6 +330,14 @@ class ChatActions {
             modelId: modelId,
           );
 
+      if (input.agentModeEnabled) {
+        AgentLoopPolicy.applyAgentSystemPrompt(
+          prepared.apiMessages,
+          goal: AgentLoopPolicy.normalizeGoal(input.text),
+          maxRounds: input.agentLoopMaxRounds,
+        );
+      }
+
       // Build user image paths
       final userImagePaths = messageGenerationService.buildUserImagePaths(
         input: input,
@@ -350,6 +359,10 @@ class ChatActions {
         supportsReasoning: supportsReasoning,
         enableReasoning: enableReasoning,
         generateTitleOnFinish: true,
+        agentModeEnabled: input.agentModeEnabled,
+        agentLoopRound: 0,
+        agentLoopMaxRounds: input.agentLoopMaxRounds,
+        agentGoal: AgentLoopPolicy.normalizeGoal(input.text),
       );
 
       await _executeGeneration(ctx);
@@ -719,6 +732,13 @@ class ChatActions {
     ChatStreamChunk chunk,
     stream_ctrl.StreamingState state,
   ) async {
+    for (final call in chunk.toolCalls ?? const <ToolCallInfo>[]) {
+      final name = call.name.trim();
+      if (name.isEmpty) continue;
+      if (!state.toolsUsed.contains(name)) {
+        state.toolsUsed.add(name);
+      }
+    }
     await streamController.handleToolCallsChunk(
       chunk,
       state,
@@ -736,6 +756,7 @@ class ChatActions {
       getToolEventsFromDb: (String messageId) =>
           chatService.getToolEvents(messageId),
     );
+    state.hadToolInteraction = true;
   }
 
   /// Handle tool results chunk from stream.
@@ -743,6 +764,18 @@ class ChatActions {
     ChatStreamChunk chunk,
     stream_ctrl.StreamingState state,
   ) async {
+    for (final result in chunk.toolResults ?? const <ToolResultInfo>[]) {
+      final trimmedName = result.name.trim();
+      final name = trimmedName.isEmpty ? 'tool' : trimmedName;
+      final content = result.content.trim();
+      final snippet = content.isEmpty
+          ? '$name completed with no textual output.'
+          : '$name: '
+                '${content.length > 160 ? '${content.substring(0, 160)}…' : content}';
+      if (!state.toolResultNotes.contains(snippet)) {
+        state.toolResultNotes.add(snippet);
+      }
+    }
     await streamController.handleToolResultsChunk(
       chunk,
       state,
@@ -763,6 +796,7 @@ class ChatActions {
             );
           },
     );
+    state.hadToolInteraction = true;
   }
 
   /// Handle content chunk from stream (non-done).
@@ -924,9 +958,6 @@ class ChatActions {
     await finishFuture;
     _finishStreamingFutures.remove(messageId);
 
-    // Notify for background notification if needed
-    onStreamFinished?.call();
-
     // Handle buffered reasoning for non-streaming mode
     if (!state.ctx.streamOutput && state.bufferedReasoning.isNotEmpty) {
       final now = DateTime.now();
@@ -956,6 +987,21 @@ class ChatActions {
         reasoningFinishedAt: r.finishedAt,
       );
     }
+
+    if (state.continuationScheduled) {
+      // Defer the next round to a microtask so the current stream can finish
+      // unwinding before we attach a new subscription for the continuation.
+      // If we start inline here, the next request can race with the previous
+      // StreamSubscription cancellation/removal and cause notifier/stream
+      // teardown to target the wrong round.
+      unawaited(
+        Future<void>.microtask(() => _startAgentContinuation(state)),
+      );
+      return;
+    }
+
+    // Notify for background notification if needed
+    onStreamFinished?.call();
   }
 
   /// Finish streaming and persist final state.
@@ -1050,6 +1096,16 @@ class ChatActions {
 
     // Trigger summary generation check (actual logic in HomeViewModel)
     onMaybeGenerateSummary?.call(conversationId);
+
+    final shouldContinue = AgentLoopPolicy.shouldContinue(
+      agentModeEnabled: state.ctx.agentModeEnabled,
+      currentRound: state.ctx.agentLoopRound,
+      maxRounds: state.ctx.agentLoopMaxRounds,
+      hadToolInteraction: state.hadToolInteraction,
+    );
+    if (shouldContinue) {
+      state.continuationScheduled = true;
+    }
   }
 
   /// Handle stream error.
@@ -1060,6 +1116,7 @@ class ChatActions {
     final messageId = state.messageId;
     final conversationId = state.conversationId;
     final errorText = e.toString();
+    state.lastError = errorText;
 
     // Reset file processing state on error
     onFileProcessingFinished?.call();
@@ -1146,10 +1203,115 @@ class ChatActions {
         generateTitle: state.ctx.generateTitleOnFinish,
       );
     }
+    if (state.continuationScheduled) {
+      // removeStreamingNotifier() and _conversationStreams.remove(...).cancel()
+      // are intentionally deferred here because the continuation round
+      // immediately replaces the prior stream state. Returning early avoids
+      // tearing down the notifier and active stream bookkeeping in the middle
+      // of a chained execution run. The continuation path becomes responsible
+      // for the next round's lifecycle and the final cleanup happens when the
+      // chained execution eventually exits without scheduling another round.
+      return;
+    }
     // Idempotent: ensure notifier is removed even if _finishStreaming was skipped
     streamController.removeStreamingNotifier(messageId);
     onStreamFinished?.call();
     await _conversationStreams.remove(conversationId)?.cancel();
+  }
+
+  Future<void> _startAgentContinuation(
+    stream_ctrl.StreamingState state,
+  ) async {
+    final conversation = chatService.getConversation(state.conversationId);
+    if (conversation == null) return;
+
+    final settings = contextProvider.read<SettingsProvider>();
+    final assistant = contextProvider
+        .read<AssistantProvider>()
+        .currentAssistant;
+    final assistantId = assistant?.id;
+    final modelConfig = messageGenerationService.getModelConfig(
+      settings,
+      assistant,
+    );
+    if (modelConfig.providerKey == null || modelConfig.modelId == null) {
+      return;
+    }
+
+    final providerKey = modelConfig.providerKey!;
+    final modelId = modelConfig.modelId!;
+
+    final prepared = await messageGenerationService
+        .prepareApiMessagesWithInjections(
+          messages: _messages,
+          versionSelections: _versionSelections,
+          currentConversation: conversation,
+          settings: settings,
+          assistant: assistant,
+          assistantId: assistantId,
+          providerKey: providerKey,
+          modelId: modelId,
+        );
+
+    AgentLoopPolicy.applyAgentSystemPrompt(
+      prepared.apiMessages,
+      goal: state.ctx.agentGoal,
+      maxRounds: state.ctx.agentLoopMaxRounds,
+    );
+    AgentLoopPolicy.appendContinuationPrompt(
+      prepared.apiMessages,
+      goal: state.ctx.agentGoal,
+      nextRound: state.ctx.agentLoopRound + 1,
+      maxRounds: state.ctx.agentLoopMaxRounds,
+      toolsUsed: List<String>.of(state.toolsUsed),
+      toolResultNotes: List<String>.of(state.toolResultNotes),
+      lastError: state.lastError,
+      previousResponse: state.fullContentRaw,
+    );
+
+    final assistantMessage = await messageGenerationService
+        .createAssistantPlaceholder(
+          conversationId: conversation.id,
+          modelId: modelId,
+          providerKey: providerKey,
+        );
+
+    streamController.markStreamingStarted(assistantMessage.id);
+    _messages.add(assistantMessage);
+    onMessagesChanged?.call();
+    _setConversationLoading(conversation.id, true);
+
+    await messageGenerationService.initializeReasoningState(
+      messageId: assistantMessage.id,
+      enableReasoning: state.ctx.enableReasoning,
+    );
+
+    final userImagePaths = messageGenerationService.buildUserImagePaths(
+      input: null,
+      lastUserImagePaths: prepared.lastUserImagePaths,
+      settings: settings,
+      providerKey: providerKey,
+      modelId: modelId,
+    );
+
+    final nextCtx = messageGenerationService.buildGenerationContext(
+      assistantMessage: assistantMessage,
+      prepared: prepared,
+      userImagePaths: userImagePaths,
+      providerKey: providerKey,
+      modelId: modelId,
+      assistant: assistant,
+      settings: settings,
+      supportsReasoning: state.ctx.supportsReasoning,
+      enableReasoning: state.ctx.enableReasoning,
+      generateTitleOnFinish: false,
+      agentModeEnabled: true,
+      agentLoopRound: state.ctx.agentLoopRound + 1,
+      agentLoopMaxRounds: state.ctx.agentLoopMaxRounds,
+      agentGoal: state.ctx.agentGoal,
+    );
+
+    await _executeGeneration(nextCtx);
   }
 
   // ============================================================================

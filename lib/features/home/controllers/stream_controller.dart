@@ -990,6 +990,10 @@ class GenerationContext {
     required this.enableReasoning,
     required this.streamOutput,
     this.generateTitleOnFinish = true,
+    this.agentModeEnabled = false,
+    this.agentLoopRound = 0,
+    this.agentLoopMaxRounds = 0,
+    this.agentGoal = '',
   });
 
   final ChatMessage assistantMessage;
@@ -1008,6 +1012,10 @@ class GenerationContext {
   final bool enableReasoning;
   final bool streamOutput;
   final bool generateTitleOnFinish;
+  final bool agentModeEnabled;
+  final int agentLoopRound;
+  final int agentLoopMaxRounds;
+  final String agentGoal;
 }
 
 /// State object for streaming message generation.
@@ -1022,6 +1030,11 @@ class StreamingState {
   DateTime? reasoningStartAt;
   bool finishHandled = false;
   bool titleQueued = false;
+  bool hadToolInteraction = false;
+  bool continuationScheduled = false;
+  final List<String> toolsUsed = <String>[];
+  final List<String> toolResultNotes = <String>[];
+  String? lastError;
 
   String get messageId => ctx.assistantMessage.id;
   String get conversationId => ctx.assistantMessage.conversationId;

@@ -37,6 +37,7 @@ class ChatInputSection extends StatelessWidget {
     required this.mediaController,
     required this.isTablet,
     required this.isLoading,
+    required this.agentModeEnabled,
     required this.isToolModel,
     required this.isReasoningModel,
     required this.isReasoningEnabled,
@@ -48,6 +49,7 @@ class ChatInputSection extends StatelessWidget {
     this.onOpenSearch,
     this.onConfigureReasoning,
     this.onSend,
+    this.onToggleAgentMode,
     this.onStop,
     this.onQuickPhrase,
     this.onLongPressQuickPhrase,
@@ -69,6 +71,7 @@ class ChatInputSection extends StatelessWidget {
   final ChatInputBarController mediaController;
   final bool isTablet;
   final bool isLoading;
+  final bool agentModeEnabled;
 
   // Model capability checkers
   final IsToolModelCallback isToolModel;
@@ -84,6 +87,7 @@ class ChatInputSection extends StatelessWidget {
   final VoidCallback? onOpenSearch;
   final VoidCallback? onConfigureReasoning;
   final ValueChanged<ChatInputData>? onSend;
+  final VoidCallback? onToggleAgentMode;
   final VoidCallback? onStop;
   final VoidCallback? onQuickPhrase;
   final VoidCallback? onLongPressQuickPhrase;
@@ -155,6 +159,8 @@ class ChatInputSection extends StatelessWidget {
       onOpenSearch: onOpenSearch,
       onSend: onSend,
       loading: isLoading,
+      agentModeEnabled: agentModeEnabled,
+      onToggleAgentMode: onToggleAgentMode,
       showMcpButton: _shouldShowMcpButton(context, settings, a, pk, mid),
       mcpActive: _isMcpActive(context, a),
       showQuickPhraseButton: _hasQuickPhrases(context, a),

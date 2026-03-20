@@ -14,10 +14,14 @@ class ChatInputData {
   final String text;
   final List<String> imagePaths; // absolute file paths or data URLs
   final List<DocumentAttachment> documents; // selected files
+  final bool agentModeEnabled;
+  final int agentLoopMaxRounds;
 
   const ChatInputData({
     required this.text,
     this.imagePaths = const [],
     this.documents = const [],
+    this.agentModeEnabled = false,
+    this.agentLoopMaxRounds = 0,
   });
 }
