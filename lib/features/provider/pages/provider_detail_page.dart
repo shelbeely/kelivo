@@ -25,9 +25,11 @@ import '../../../shared/widgets/model_tag_wrap.dart';
 import '../../../shared/widgets/ios_checkbox.dart';
 import '../../../shared/widgets/ios_switch.dart';
 import '../../../shared/widgets/ios_tactile.dart';
+import '../../../utils/locale_utils.dart';
 import 'multi_key_manager_page.dart';
 import 'provider_network_page.dart';
 import '../../../core/services/haptics.dart';
+import '../provider_banner_text.dart';
 import '../../provider/widgets/provider_avatar.dart';
 import '../../../utils/model_grouping.dart';
 
@@ -117,7 +119,7 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
-    final isZh = Localizations.localeOf(context).languageCode.startsWith('zh');
+    final isZh = isZhContext(context);
     bool isUserAdded(String key) {
       const fixed = {
         'KelivoIN',
@@ -571,9 +573,7 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isZh
-                      ? '革命性竞价 AI MaaS 平台，价格由市场供需决定，告别高成本固定定价。'
-                      : 'A bidding-based AI MaaS platform where pricing is determined by market supply and demand, avoiding high fixed costs.',
+                  providerBannerDescription(widget.keyName, isZh: isZh)!,
                   style: TextStyle(color: cs.onSurface.withValues(alpha: 0.8)),
                 ),
                 const SizedBox(height: 6),
@@ -628,9 +628,7 @@ class _ProviderDetailPageState extends State<ProviderDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isZh
-                      ? '已内置硅基流动的免费模型，无需 API Key。若需更强大的模型，请申请并在此配置你自己的 API Key。'
-                      : 'Built-in free SiliconFlow models are available without an API key. If you need stronger models, request one and configure your own API key here.',
+                  providerBannerDescription(widget.keyName, isZh: isZh)!,
                   style: TextStyle(color: cs.onSurface.withValues(alpha: 0.8)),
                 ),
                 const SizedBox(height: 6),

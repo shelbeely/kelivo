@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../utils/url_launcher_ext.dart';
 import '../../../shared/widgets/favicon.dart';
+import '../../../utils/locale_utils.dart';
 
 class MorePage extends StatelessWidget {
   const MorePage({super.key});
@@ -9,6 +10,7 @@ class MorePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final isZh = isZhContext(context);
 
     Widget title(String text) => Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -33,7 +35,7 @@ class MorePage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // LeaderBoard section
-              title('LLM Leaderboards'),
+              title(isZh ? 'LLM排行榜' : 'LLM Leaderboards'),
               Row(
                 children: const [
                   Expanded(

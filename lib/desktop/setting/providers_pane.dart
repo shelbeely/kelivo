@@ -915,7 +915,7 @@ class _DesktopProviderDetailPaneState
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
-    final isZh = Localizations.localeOf(context).languageCode.startsWith('zh');
+    final isZh = isZhContext(context);
     final sp = context.watch<SettingsProvider>();
     final cfg = sp.getProviderConfig(
       widget.providerKey,
@@ -1028,9 +1028,10 @@ class _DesktopProviderDetailPaneState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isZh
-                            ? '革命性竞价 AI MaaS 平台，价格由市场供需决定，告别高成本固定定价。'
-                            : 'A bidding-based AI MaaS platform where pricing is determined by market supply and demand, avoiding high fixed costs.',
+                        providerBannerDescription(
+                          widget.providerKey,
+                          isZh: isZh,
+                        )!,
                         style: TextStyle(
                           color: cs.onSurface.withValues(alpha: 0.8),
                         ),
@@ -1093,9 +1094,10 @@ class _DesktopProviderDetailPaneState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isZh
-                            ? '已内置硅基流动的免费模型，无需 API Key。若需更强大的模型，请申请并在此配置你自己的 API Key。'
-                            : 'Built-in free SiliconFlow models are available without an API key. If you need stronger models, request one and configure your own API key here.',
+                        providerBannerDescription(
+                          widget.providerKey,
+                          isZh: isZh,
+                        )!,
                         style: TextStyle(
                           color: cs.onSurface.withValues(alpha: 0.8),
                         ),

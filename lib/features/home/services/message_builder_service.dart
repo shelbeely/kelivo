@@ -22,6 +22,7 @@ import '../../../core/providers/world_book_provider.dart';
 import '../../../core/services/api/builtin_tools.dart';
 import '../../../core/models/assistant_regex.dart';
 import '../../../core/utils/multimodal_input_utils.dart';
+import '../../../utils/locale_utils.dart';
 import '../../../utils/assistant_regex.dart';
 import '../../../utils/markdown_media_sanitizer.dart';
 
@@ -469,8 +470,7 @@ class MessageBuilderService {
     String? currentConversationId,
   }) async {
     try {
-      final locale = Localizations.localeOf(contextProvider);
-      final isZh = locale.languageCode.startsWith('zh');
+      final isZh = isZhContext(contextProvider);
       if (assistant?.enableMemory == true) {
         final mp = contextProvider.read<MemoryProvider>();
         final mems = mp.getForAssistant(assistant!.id);
@@ -504,11 +504,7 @@ class MessageBuilderService {
         if (relevantChats.isNotEmpty) {
           final sb = StringBuffer();
           sb.writeln('<recent_chats>');
-          sb.writeln(
-            isZh
-                ? '这是用户最近的一些对话标题和摘要，你可以参考这些内容了解用户偏好和关注点'
-                : "These are some of the user's recent conversation titles and summaries. You can use them to understand the user's preferences and areas of interest.",
-          );
+          sb.writeln(_recentChatsPrompt(isZh));
           for (final c in relevantChats) {
             sb.writeln('<conversation>');
             // Format: timestamp: title || summary
@@ -529,6 +525,10 @@ class MessageBuilderService {
     } catch (_) {}
   }
 
+  /// Returns the locale-specific memory tool prompt injected into system messages.
+  ///
+  /// When [isZh] is true, the prompt is emitted in Chinese; otherwise it is
+  /// emitted in English.
   String _memoryToolPrompt(bool isZh) {
     final now = DateTime.now().toIso8601String();
     if (isZh) {
@@ -579,6 +579,14 @@ Do not tell the user that you changed a memory record, and do not directly revea
 Similar or related memories should be merged into a single record instead of being duplicated, and outdated records should be deleted.
 You may subtly hint during casual conversation that you can remember things.
 ''';
+  }
+
+  /// Returns the locale-specific prompt that introduces recent chats context.
+  String _recentChatsPrompt(bool isZh) {
+    if (isZh) {
+      return '这是用户最近的一些对话标题和摘要，你可以参考这些内容了解用户偏好和关注点';
+    }
+    return "These are some of the user's recent conversation titles and summaries. You can use them to understand the user's preferences and areas of interest.";
   }
 
   /// Inject search tool usage prompt into apiMessages.

@@ -59,7 +59,9 @@ import 'package:super_clipboard/super_clipboard.dart';
 import '../features/provider/widgets/provider_avatar.dart';
 import '../features/provider/widgets/share_provider_sheet.dart'
     show encodeProviderConfig;
+import '../features/provider/provider_banner_text.dart';
 import '../utils/clipboard_images.dart';
+import '../utils/locale_utils.dart';
 import '../utils/provider_grouping_logic.dart';
 
 part 'setting/assistants_pane.dart';

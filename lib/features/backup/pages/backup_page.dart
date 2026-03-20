@@ -19,6 +19,7 @@ import '../../../core/services/native_file_save.dart';
 import '../../../shared/widgets/ios_switch.dart';
 import '../../../core/services/backup/cherry_importer.dart';
 import '../../../core/services/backup/chatbox_importer.dart';
+import '../../../utils/locale_utils.dart';
 import '../../../utils/platform_utils.dart';
 
 // File size formatter (B, KB, MB, GB)
@@ -48,8 +49,7 @@ class _BackupPageState extends State<BackupPage> {
   Future<bool?> _confirmCherryImport(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
-    final locale = Localizations.localeOf(context);
-    final isZh = locale.languageCode.startsWith('zh');
+    final isZh = isZhContext(context);
     final String body = isZh
         ? '此功能目前仍处于实验阶段。\n目前仅能导入助手，对话内容，供应商和文件。\n一些供应商需要在 base URL 后面添加 /v1 或 /v1beta。\n为确保数据安全，建议在导入前先执行备份。\n是否已知晓并继续选择文件？'
         : 'This feature is still experimental.\nIt currently imports only assistants, conversations, providers, and files.\nSome providers may require adding /v1 or /v1beta to the base URL.\nTo keep your data safe, it is recommended to back up before importing.\nContinue and choose a file?';
