@@ -765,7 +765,8 @@ class ChatActions {
     stream_ctrl.StreamingState state,
   ) async {
     for (final result in chunk.toolResults ?? const <ToolResultInfo>[]) {
-      final name = result.name.trim().isEmpty ? 'tool' : result.name.trim();
+      final trimmedName = result.name.trim();
+      final name = trimmedName.isEmpty ? 'tool' : trimmedName;
       final content = result.content.trim();
       final snippet = content.isEmpty
           ? '$name completed with no textual output.'
@@ -988,6 +989,11 @@ class ChatActions {
     }
 
     if (state.continuationScheduled) {
+      // Defer the next round to a microtask so the current stream can finish
+      // unwinding before we attach a new subscription for the continuation.
+      // If we start inline here, the next request can race with the previous
+      // StreamSubscription cancellation/removal and cause notifier/stream
+      // teardown to target the wrong round.
       unawaited(
         Future<void>.microtask(() => _startAgentContinuation(state)),
       );
@@ -1198,6 +1204,11 @@ class ChatActions {
       );
     }
     if (state.continuationScheduled) {
+      // removeStreamingNotifier() and _conversationStreams.remove(...).cancel()
+      // are intentionally deferred here because the continuation round
+      // immediately replaces the prior stream state. Returning early avoids
+      // tearing down the notifier and active stream bookkeeping in the middle
+      // of a chained execution run.
       return;
     }
     // Idempotent: ensure notifier is removed even if _finishStreaming was skipped

@@ -1,5 +1,10 @@
 class AgentLoopPolicy {
   static const int defaultMaxContinuationRounds = 2;
+  // Keep only a few tool outputs in the continuation prompt so the next round
+  // gets enough signal to reflect/retry without letting prompt size grow
+  // uncontrollably across chained execution loops.
+  static const int maxToolResultNotesInPrompt = 3;
+  static const int maxPreviousResponseLength = 400;
 
   static String normalizeGoal(String raw) {
     final trimmed = raw.trim();
@@ -107,7 +112,9 @@ If you need multiple passes, keep them bounded. The app may allow up to $maxRoun
     String? previousResponse,
   }) {
     final toolsText = toolsUsed.isEmpty ? 'none' : toolsUsed.join(', ');
-    final boundedToolNotes = toolResultNotes.take(3).toList(growable: false);
+    final boundedToolNotes = toolResultNotes
+        .take(maxToolResultNotesInPrompt)
+        .toList(growable: false);
     final toolResultsText = boundedToolNotes.isEmpty
         ? 'none'
         : boundedToolNotes.join('\n- ');
@@ -117,7 +124,7 @@ If you need multiple passes, keep them bounded. The app may allow up to $maxRoun
     final responseText =
         (previousResponse == null || previousResponse.trim().isEmpty)
         ? 'none'
-        : _clip(previousResponse.trim(), 400);
+        : _clip(previousResponse.trim(), maxPreviousResponseLength);
     return '''
 Continue working autonomously on the same goal:
 $goal

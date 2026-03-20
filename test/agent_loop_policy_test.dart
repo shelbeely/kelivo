@@ -76,7 +76,14 @@ void main() {
       expect(messages.first['role'], 'system');
       expect(messages.first['content'], contains('Kelivo agent mode'));
       expect(messages.first['content'], contains('Run an execution loop'));
+      expect(messages.first['content'], contains('understand the task'));
+      expect(messages.first['content'], contains('make a short plan'));
+      expect(
+        messages.first['content'],
+        contains('inspect the relevant project/context'),
+      );
       expect(messages.first['content'], contains('run checks or verification'));
+      expect(messages.first['content'], contains('reflect on failures'));
       expect(messages.last['role'], 'user');
       expect(messages.last['content'], contains('continuation round 1 of 2'));
       expect(messages.last['content'], contains('read_file, edit_file'));
