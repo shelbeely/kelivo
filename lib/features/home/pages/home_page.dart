@@ -779,6 +779,7 @@ class _HomePageState extends State<HomePage>
       mediaController: _mediaController,
       isTablet: isTablet,
       isLoading: _controller.isCurrentConversationLoading,
+      agentModeEnabled: _controller.agentModeEnabled,
       isToolModel: _controller.isToolModel,
       isReasoningModel: _controller.isReasoningModel,
       isReasoningEnabled: _controller.isReasoningEnabled,
@@ -826,7 +827,15 @@ class _HomePageState extends State<HomePage>
         }
       },
       onSend: (text) {
-        _controller.sendMessage(text);
+        _controller.sendMessage(
+          ChatInputData(
+            text: text.text,
+            imagePaths: text.imagePaths,
+            documents: text.documents,
+            agentModeEnabled: _controller.agentModeEnabled,
+            agentLoopMaxRounds: _controller.agentModeEnabled ? 1 : 0,
+          ),
+        );
         _inputController.clear();
         if (PlatformUtils.isMobile) {
           _controller.dismissKeyboard();
@@ -834,6 +843,7 @@ class _HomePageState extends State<HomePage>
           _inputFocus.requestFocus();
         }
       },
+      onToggleAgentMode: _controller.toggleAgentMode,
       onStop: _controller.cancelStreaming,
       onQuickPhrase: _showQuickPhraseMenu,
       onLongPressQuickPhrase: () {

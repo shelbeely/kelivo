@@ -133,6 +133,7 @@ class HomePageController extends ChangeNotifier {
   final Set<String> _selectedItems = <String>{};
   bool _showThinkingTools = false;
   bool _showThinkingContent = false;
+  bool _agentModeEnabled = false;
 
   // Desktop drag-and-drop
   bool _isDragHovering = false;
@@ -187,6 +188,7 @@ class HomePageController extends ChangeNotifier {
   int get selectedCount => _selectedItems.length;
   bool get showThinkingTools => _showThinkingTools;
   bool get showThinkingContent => _showThinkingContent;
+  bool get agentModeEnabled => _agentModeEnabled;
   bool get isDragHovering => _isDragHovering;
   bool get tabletSidebarOpen => _tabletSidebarOpen;
   bool get rightSidebarOpen => _rightSidebarOpen;
@@ -601,6 +603,11 @@ class HomePageController extends ChangeNotifier {
 
   Future<void> cancelStreaming() async {
     await _viewModel.cancelStreaming();
+    notifyListeners();
+  }
+
+  void toggleAgentMode() {
+    _agentModeEnabled = !_agentModeEnabled;
     notifyListeners();
   }
 

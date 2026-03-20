@@ -12,6 +12,7 @@ import '../../../core/services/chat/chat_service.dart';
 import '../../../utils/assistant_regex.dart';
 import '../../../core/models/assistant_regex.dart';
 import '../../../utils/markdown_media_sanitizer.dart';
+import '../services/agent_loop_policy.dart';
 import '../services/message_generation_service.dart';
 import 'chat_controller.dart';
 import 'generation_controller.dart';
@@ -329,6 +330,14 @@ class ChatActions {
             modelId: modelId,
           );
 
+      if (input.agentModeEnabled) {
+        AgentLoopPolicy.applyAgentSystemPrompt(
+          prepared.apiMessages,
+          goal: AgentLoopPolicy.normalizeGoal(input.text),
+          maxRounds: input.agentLoopMaxRounds,
+        );
+      }
+
       // Build user image paths
       final userImagePaths = messageGenerationService.buildUserImagePaths(
         input: input,
@@ -350,6 +359,10 @@ class ChatActions {
         supportsReasoning: supportsReasoning,
         enableReasoning: enableReasoning,
         generateTitleOnFinish: true,
+        agentModeEnabled: input.agentModeEnabled,
+        agentLoopRound: 0,
+        agentLoopMaxRounds: input.agentLoopMaxRounds,
+        agentGoal: AgentLoopPolicy.normalizeGoal(input.text),
       );
 
       await _executeGeneration(ctx);
@@ -736,6 +749,7 @@ class ChatActions {
       getToolEventsFromDb: (String messageId) =>
           chatService.getToolEvents(messageId),
     );
+    state.hadToolInteraction = true;
   }
 
   /// Handle tool results chunk from stream.
@@ -763,6 +777,7 @@ class ChatActions {
             );
           },
     );
+    state.hadToolInteraction = true;
   }
 
   /// Handle content chunk from stream (non-done).
@@ -924,9 +939,6 @@ class ChatActions {
     await finishFuture;
     _finishStreamingFutures.remove(messageId);
 
-    // Notify for background notification if needed
-    onStreamFinished?.call();
-
     // Handle buffered reasoning for non-streaming mode
     if (!state.ctx.streamOutput && state.bufferedReasoning.isNotEmpty) {
       final now = DateTime.now();
@@ -956,6 +968,16 @@ class ChatActions {
         reasoningFinishedAt: r.finishedAt,
       );
     }
+
+    if (state.continuationScheduled) {
+      unawaited(
+        Future<void>.microtask(() => _startAgentContinuation(state)),
+      );
+      return;
+    }
+
+    // Notify for background notification if needed
+    onStreamFinished?.call();
   }
 
   /// Finish streaming and persist final state.
@@ -1050,6 +1072,16 @@ class ChatActions {
 
     // Trigger summary generation check (actual logic in HomeViewModel)
     onMaybeGenerateSummary?.call(conversationId);
+
+    final shouldContinue = AgentLoopPolicy.shouldContinue(
+      agentModeEnabled: state.ctx.agentModeEnabled,
+      currentRound: state.ctx.agentLoopRound,
+      maxRounds: state.ctx.agentLoopMaxRounds,
+      hadToolInteraction: state.hadToolInteraction,
+    );
+    if (shouldContinue) {
+      state.continuationScheduled = true;
+    }
   }
 
   /// Handle stream error.
@@ -1146,10 +1178,101 @@ class ChatActions {
         generateTitle: state.ctx.generateTitleOnFinish,
       );
     }
+    if (state.continuationScheduled) {
+      return;
+    }
     // Idempotent: ensure notifier is removed even if _finishStreaming was skipped
     streamController.removeStreamingNotifier(messageId);
     onStreamFinished?.call();
     await _conversationStreams.remove(conversationId)?.cancel();
+  }
+
+  Future<void> _startAgentContinuation(stream_ctrl.StreamingState state) async {
+    final conversation = chatService.getConversation(state.conversationId);
+    if (conversation == null) return;
+
+    final settings = contextProvider.read<SettingsProvider>();
+    final assistant = contextProvider
+        .read<AssistantProvider>()
+        .currentAssistant;
+    final assistantId = assistant?.id;
+    final modelConfig = messageGenerationService.getModelConfig(
+      settings,
+      assistant,
+    );
+    if (modelConfig.providerKey == null || modelConfig.modelId == null) {
+      return;
+    }
+
+    final providerKey = modelConfig.providerKey!;
+    final modelId = modelConfig.modelId!;
+
+    final prepared = await messageGenerationService.prepareApiMessagesWithInjections(
+      messages: _messages,
+      versionSelections: _versionSelections,
+      currentConversation: conversation,
+      settings: settings,
+      assistant: assistant,
+      assistantId: assistantId,
+      providerKey: providerKey,
+      modelId: modelId,
+    );
+
+    AgentLoopPolicy.applyAgentSystemPrompt(
+      prepared.apiMessages,
+      goal: state.ctx.agentGoal,
+      maxRounds: state.ctx.agentLoopMaxRounds,
+    );
+    AgentLoopPolicy.appendContinuationPrompt(
+      prepared.apiMessages,
+      goal: state.ctx.agentGoal,
+      nextRound: state.ctx.agentLoopRound + 1,
+      maxRounds: state.ctx.agentLoopMaxRounds,
+    );
+
+    final assistantMessage = await messageGenerationService
+        .createAssistantPlaceholder(
+          conversationId: conversation.id,
+          modelId: modelId,
+          providerKey: providerKey,
+        );
+
+    streamController.markStreamingStarted(assistantMessage.id);
+    _messages.add(assistantMessage);
+    onMessagesChanged?.call();
+    _setConversationLoading(conversation.id, true);
+
+    await messageGenerationService.initializeReasoningState(
+      messageId: assistantMessage.id,
+      enableReasoning: state.ctx.enableReasoning,
+    );
+
+    final userImagePaths = messageGenerationService.buildUserImagePaths(
+      input: null,
+      lastUserImagePaths: prepared.lastUserImagePaths,
+      settings: settings,
+      providerKey: providerKey,
+      modelId: modelId,
+    );
+
+    final nextCtx = messageGenerationService.buildGenerationContext(
+      assistantMessage: assistantMessage,
+      prepared: prepared,
+      userImagePaths: userImagePaths,
+      providerKey: providerKey,
+      modelId: modelId,
+      assistant: assistant,
+      settings: settings,
+      supportsReasoning: state.ctx.supportsReasoning,
+      enableReasoning: state.ctx.enableReasoning,
+      generateTitleOnFinish: false,
+      agentModeEnabled: true,
+      agentLoopRound: state.ctx.agentLoopRound + 1,
+      agentLoopMaxRounds: state.ctx.agentLoopMaxRounds,
+      agentGoal: state.ctx.agentGoal,
+    );
+
+    await _executeGeneration(nextCtx);
   }
 
   // ============================================================================

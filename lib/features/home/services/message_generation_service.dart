@@ -262,6 +262,10 @@ class MessageGenerationService {
     required bool supportsReasoning,
     required bool enableReasoning,
     required bool generateTitleOnFinish,
+    bool agentModeEnabled = false,
+    int agentLoopRound = 0,
+    int agentLoopMaxRounds = 0,
+    String agentGoal = '',
   }) {
     return stream_ctrl.GenerationContext(
       assistantMessage: assistantMessage,
@@ -280,6 +284,10 @@ class MessageGenerationService {
       enableReasoning: enableReasoning,
       streamOutput: assistant?.streamOutput ?? true,
       generateTitleOnFinish: generateTitleOnFinish,
+      agentModeEnabled: agentModeEnabled,
+      agentLoopRound: agentLoopRound,
+      agentLoopMaxRounds: agentLoopMaxRounds,
+      agentGoal: agentGoal,
     );
   }
 
