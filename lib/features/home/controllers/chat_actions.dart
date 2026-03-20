@@ -1208,7 +1208,9 @@ class ChatActions {
       // are intentionally deferred here because the continuation round
       // immediately replaces the prior stream state. Returning early avoids
       // tearing down the notifier and active stream bookkeeping in the middle
-      // of a chained execution run.
+      // of a chained execution run. The continuation path becomes responsible
+      // for the next round's lifecycle and the final cleanup happens when the
+      // chained execution eventually exits without scheduling another round.
       return;
     }
     // Idempotent: ensure notifier is removed even if _finishStreaming was skipped
