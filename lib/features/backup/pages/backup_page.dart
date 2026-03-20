@@ -51,8 +51,8 @@ class _BackupPageState extends State<BackupPage> {
     final locale = Localizations.localeOf(context);
     final isZh = locale.languageCode.startsWith('zh');
     final String body = isZh
-        ? '此功能目前仍处于实验阶段。\n目前仅能导入助手，对话内容，供应商和文件，\n一些供应商需要在baseurl后面添加/v1 or /v1beta。 \n为确保数据安全，建议在导入前先执行备份。\n是否已知晓并继续选择文件？'
-        : 'This feature is experimental.\nTo keep your data safe, it is recommended to back up before importing.\nProceed to choose a file?';
+        ? '此功能目前仍处于实验阶段。\n目前仅能导入助手，对话内容，供应商和文件。\n一些供应商需要在 base URL 后面添加 /v1 或 /v1beta。\n为确保数据安全，建议在导入前先执行备份。\n是否已知晓并继续选择文件？'
+        : 'This feature is still experimental.\nIt currently imports only assistants, conversations, providers, and files.\nSome providers may require adding /v1 or /v1beta to the base URL.\nTo keep your data safe, it is recommended to back up before importing.\nContinue and choose a file?';
 
     return showModalBottomSheet<bool>(
       context: context,

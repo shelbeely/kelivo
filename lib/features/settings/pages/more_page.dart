@@ -33,7 +33,7 @@ class MorePage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // LeaderBoard section
-              title('LLM排行榜'),
+              title('LLM Leaderboards'),
               Row(
                 children: const [
                   Expanded(

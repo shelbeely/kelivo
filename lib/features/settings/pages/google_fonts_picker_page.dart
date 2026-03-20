@@ -74,7 +74,7 @@ class _GoogleFontsPickerPageState extends State<GoogleFontsPickerPage> {
                 return ListTile(
                   title: Text(fam),
                   trailing: Text(
-                    'Aa字',
+                    'Aa',
                     style: GoogleFonts.getFont(fam, fontSize: 18),
                   ),
                   onTap: () => Navigator.of(context).pop(fam),

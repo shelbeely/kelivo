@@ -915,6 +915,7 @@ class _DesktopProviderDetailPaneState
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
+    final isZh = Localizations.localeOf(context).languageCode.startsWith('zh');
     final sp = context.watch<SettingsProvider>();
     final cfg = sp.getProviderConfig(
       widget.providerKey,
@@ -1027,7 +1028,9 @@ class _DesktopProviderDetailPaneState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '革命性竞价 AI MaaS 平台，价格由市场供需决定，告别高成本固定定价。',
+                        isZh
+                            ? '革命性竞价 AI MaaS 平台，价格由市场供需决定，告别高成本固定定价。'
+                            : 'A bidding-based AI MaaS platform where pricing is determined by market supply and demand, avoiding high fixed costs.',
                         style: TextStyle(
                           color: cs.onSurface.withValues(alpha: 0.8),
                         ),
@@ -1035,7 +1038,7 @@ class _DesktopProviderDetailPaneState
                       const SizedBox(height: 6),
                       Text.rich(
                         TextSpan(
-                          text: '官网：',
+                          text: '${l10n.aboutPageWebsite}: ',
                           style: TextStyle(
                             color: cs.onSurface.withValues(alpha: 0.8),
                           ),
@@ -1090,7 +1093,9 @@ class _DesktopProviderDetailPaneState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '已内置硅基流动的免费模型，无需 API Key。若需更强大的模型，请申请并在此配置你自己的 API Key。',
+                        isZh
+                            ? '已内置硅基流动的免费模型，无需 API Key。若需更强大的模型，请申请并在此配置你自己的 API Key。'
+                            : 'Built-in free SiliconFlow models are available without an API key. If you need stronger models, request one and configure your own API key here.',
                         style: TextStyle(
                           color: cs.onSurface.withValues(alpha: 0.8),
                         ),
@@ -1098,7 +1103,7 @@ class _DesktopProviderDetailPaneState
                       const SizedBox(height: 6),
                       Text.rich(
                         TextSpan(
-                          text: '官网：',
+                          text: '${l10n.aboutPageWebsite}: ',
                           style: TextStyle(
                             color: cs.onSurface.withValues(alpha: 0.8),
                           ),
@@ -1810,7 +1815,7 @@ class _DesktopProviderDetailPaneState
                     if (models.isNotEmpty) ...[
                       const SizedBox(width: 6),
                       Tooltip(
-                        message: '删除全部模型',
+                        message: l10n.providerDetailPageDeleteText,
                         child: _IconBtn(
                           icon: lucide.Lucide.Trash2,
                           color: cs.onSurface.withValues(alpha: 0.85),

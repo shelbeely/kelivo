@@ -1854,7 +1854,7 @@ class _FontRowItemState extends State<_FontRowItem> {
               ? Colors.white.withValues(alpha: 0.06)
               : Colors.black.withValues(alpha: 0.04))
         : Colors.transparent;
-    final sample = 'Aa字';
+    final sample = 'Aa';
     return MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),

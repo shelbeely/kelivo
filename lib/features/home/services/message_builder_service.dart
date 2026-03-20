@@ -469,6 +469,8 @@ class MessageBuilderService {
     String? currentConversationId,
   }) async {
     try {
+      final locale = Localizations.localeOf(contextProvider);
+      final isZh = locale.languageCode.startsWith('zh');
       if (assistant?.enableMemory == true) {
         final mp = contextProvider.read<MemoryProvider>();
         final mems = mp.getForAssistant(assistant!.id);
@@ -485,29 +487,7 @@ class MessageBuilderService {
           buf.writeln('</record>');
         }
         buf.writeln('</memories>');
-        buf.writeln('''
-## Memory Tool
-你是一个无状态的大模型，你无法存储记忆，因此为了记住信息，你需要使用**记忆工具**。
-你可以使用 `create_memory`, `edit_memory`, `delete_memory` 工具创建、更新或删除记忆。
-- 如果记忆中没有相关信息，请使用 create_memory 创建一条新的记录。
-- 如果已有相关记录，请使用 edit_memory 更新内容。
-- 若记忆过时或无用，请使用 delete_memory 删除。
-这些记忆会自动包含在未来的对话上下文中，在<memories>标签内。
-请勿在记忆中存储敏感信息，敏感信息包括：用户的民族、宗教信仰、性取向、政治观点及党派归属、性生活、犯罪记录等。
-在与用户聊天过程中，你可以像一个私人秘书一样**主动的**记录用户相关的信息到记忆里，包括但不限于：
-- 用户昵称/姓名
-- 年龄/性别/兴趣爱好
-- 计划事项等
-- 聊天风格偏好
-- 工作相关
-- 首次聊天时间
-- ...
-请主动调用工具记录，而不是需要用户要求。
-记忆如果包含日期信息，请包含在内，请使用绝对时间格式，并且当前时间是 ${DateTime.now().toIso8601String()}。
-无需告知用户你已更改记忆记录，也不要在对话中直接显示记忆内容，除非用户主动要求。
-相似或相关的记忆应合并为一条记录，而不要重复记录，过时记录应删除。
-你可以在和用户闲聊的时候暗示用户你能记住东西。
-''');
+        buf.writeln(_memoryToolPrompt(isZh));
         _appendToSystemMessage(apiMessages, buf.toString());
       }
       if (assistant?.enableRecentChatsReference == true) {
@@ -524,7 +504,11 @@ class MessageBuilderService {
         if (relevantChats.isNotEmpty) {
           final sb = StringBuffer();
           sb.writeln('<recent_chats>');
-          sb.writeln('这是用户最近的一些对话标题和摘要，你可以参考这些内容了解用户偏好和关注点');
+          sb.writeln(
+            isZh
+                ? '这是用户最近的一些对话标题和摘要，你可以参考这些内容了解用户偏好和关注点'
+                : "These are some of the user's recent conversation titles and summaries. You can use them to understand the user's preferences and areas of interest.",
+          );
           for (final c in relevantChats) {
             sb.writeln('<conversation>');
             // Format: timestamp: title || summary
@@ -543,6 +527,58 @@ class MessageBuilderService {
         }
       }
     } catch (_) {}
+  }
+
+  String _memoryToolPrompt(bool isZh) {
+    final now = DateTime.now().toIso8601String();
+    if (isZh) {
+      return '''
+## Memory Tool
+你是一个无状态的大模型，你无法存储记忆，因此为了记住信息，你需要使用**记忆工具**。
+你可以使用 `create_memory`, `edit_memory`, `delete_memory` 工具创建、更新或删除记忆。
+- 如果记忆中没有相关信息，请使用 create_memory 创建一条新的记录。
+- 如果已有相关记录，请使用 edit_memory 更新内容。
+- 若记忆过时或无用，请使用 delete_memory 删除。
+这些记忆会自动包含在未来的对话上下文中，在<memories>标签内。
+请勿在记忆中存储敏感信息，敏感信息包括：用户的民族、宗教信仰、性取向、政治观点及党派归属、性生活、犯罪记录等。
+在与用户聊天过程中，你可以像一个私人秘书一样**主动的**记录用户相关的信息到记忆里，包括但不限于：
+- 用户昵称/姓名
+- 年龄/性别/兴趣爱好
+- 计划事项等
+- 聊天风格偏好
+- 工作相关
+- 首次聊天时间
+- ...
+请主动调用工具记录，而不是需要用户要求。
+记忆如果包含日期信息，请包含在内，请使用绝对时间格式，并且当前时间是 $now。
+无需告知用户你已更改记忆记录，也不要在对话中直接显示记忆内容，除非用户主动要求。
+相似或相关的记忆应合并为一条记录，而不要重复记录，过时记录应删除。
+你可以在和用户闲聊的时候暗示用户你能记住东西。
+''';
+    }
+    return '''
+## Memory Tool
+You are a stateless large language model and cannot store memories by yourself, so you must use the **memory tools** to remember information.
+You can use the `create_memory`, `edit_memory`, and `delete_memory` tools to create, update, or delete memories.
+- If no relevant memory exists yet, use `create_memory` to create a new record.
+- If a related memory already exists, use `edit_memory` to update it.
+- If a memory is outdated or no longer useful, use `delete_memory` to remove it.
+These memories will automatically be included in future conversation context inside the <memories> tag.
+Do not store sensitive information in memory. Sensitive information includes ethnicity, religious beliefs, sexual orientation, political views or party affiliation, sex life, criminal history, and similar data.
+During conversation, you may proactively record user-related information into memory like a private secretary, including but not limited to:
+- User nickname or name
+- Age, gender, or hobbies
+- Plans or upcoming tasks
+- Chat style preferences
+- Work-related details
+- The date of the first conversation
+- ...
+Call the tools proactively to record useful information instead of waiting for the user to explicitly ask.
+If a memory contains date information, include it using an absolute time format. The current time is $now.
+Do not tell the user that you changed a memory record, and do not directly reveal memory contents in conversation unless the user explicitly asks.
+Similar or related memories should be merged into a single record instead of being duplicated, and outdated records should be deleted.
+You may subtly hint during casual conversation that you can remember things.
+''';
   }
 
   /// Inject search tool usage prompt into apiMessages.
